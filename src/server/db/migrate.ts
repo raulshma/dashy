@@ -11,7 +11,7 @@
  * 3. Logs the result
  * 4. Closes the connection
  */
-import { migrate } from 'drizzle-orm/bun-sqlite/migrator';
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { closeDatabase, db } from './connection';
 
 function runMigrations() {
