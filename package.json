@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite dev --port 3000",
     "build": "vite build",
+    "analyze": "vite build --mode analyze",
     "preview": "vite preview",
     "test": "vitest run",
     "lint": "eslint",
@@ -77,6 +78,7 @@
     "drizzle-kit": "^0.31.9",
     "jsdom": "^27.0.0",
     "prettier": "^3.5.3",
+    "rollup-plugin-visualizer": "^6.0.5",
     "typescript": "^5.7.2",
     "vite": "^7.1.7",
     "vitest": "^3.0.5",

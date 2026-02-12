@@ -7,7 +7,7 @@
  * Usage:
  *   import { createDashboardFn, listDashboardsFn, ... } from '@server/api/dashboards'
  */
-import { eq, and, isNull, like, count, desc, asc } from 'drizzle-orm';
+import { eq, and, isNull, like, count, desc, asc, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@server/db/connection';
 import { dashboards, pages, widgets } from '@server/db/schema';
@@ -54,6 +54,16 @@ export interface DashboardDetail extends Omit<SelectDashboard, 'userId' | 'delet
     icon: string | null;
     sortOrder: number;
     widgetCount: number;
+    widgets?: Array<{
+      id: string;
+      type: string;
+      title: string | null;
+      config: Record<string, unknown>;
+      x: number;
+      y: number;
+      w: number;
+      h: number;
+    }>;
   }>;
 }
 
@@ -316,6 +326,8 @@ export const listDashboardsFn = protectedGetFn
 const getDashboardInputSchema = z.object({
   /** Either a UUID or a slug */
   identifier: z.string().min(1),
+  /** Include widget metadata for each page (used by search index / editor tooling) */
+  includeWidgets: z.boolean().default(false),
 });
 
 /**
@@ -328,7 +340,7 @@ export const getDashboardFn = protectedGetFn
     async ({ data, context }): Promise<ApiResponse<DashboardDetail>> => {
       try {
         const userId = context.user.id;
-        const { identifier } = data;
+        const { identifier, includeWidgets } = data;
 
         // Try by ID first, then by slug
         const isUuid =
@@ -365,19 +377,74 @@ export const getDashboardFn = protectedGetFn
           .where(eq(pages.dashboardId, dashboard.id))
           .orderBy(asc(pages.sortOrder));
 
+        const pageIds = dashboardPages.map((p) => p.id);
+
+        const widgetsByPage = new Map<
+          string,
+          Array<{
+            id: string;
+            type: string;
+            title: string | null;
+            config: Record<string, unknown>;
+            x: number;
+            y: number;
+            w: number;
+            h: number;
+          }>
+        >();
+
+        if (includeWidgets && pageIds.length > 0) {
+          const dashboardWidgets = await db
+            .select({
+              id: widgets.id,
+              pageId: widgets.pageId,
+              type: widgets.type,
+              title: widgets.title,
+              config: widgets.config,
+              x: widgets.x,
+              y: widgets.y,
+              w: widgets.w,
+              h: widgets.h,
+            })
+            .from(widgets)
+            .where(inArray(widgets.pageId, pageIds));
+
+          for (const widget of dashboardWidgets) {
+            const pageWidgets = widgetsByPage.get(widget.pageId) ?? [];
+            pageWidgets.push({
+              id: widget.id,
+              type: widget.type,
+              title: widget.title,
+              config: widget.config,
+              x: widget.x,
+              y: widget.y,
+              w: widget.w,
+              h: widget.h,
+            });
+            widgetsByPage.set(widget.pageId, pageWidgets);
+          }
+        }
+
         const pagesWithCounts = await Promise.all(
           dashboardPages.map(async (p) => {
-            const [wCount] = await db
-              .select({ count: count() })
-              .from(widgets)
-              .where(eq(widgets.pageId, p.id));
+            const pageWidgets = widgetsByPage.get(p.id) ?? [];
+            const widgetCount = includeWidgets
+              ? pageWidgets.length
+              : (
+                  await db
+                    .select({ count: count() })
+                    .from(widgets)
+                    .where(eq(widgets.pageId, p.id))
+                    .limit(1)
+                )[0]?.count ?? 0;
 
             return {
               id: p.id,
               name: p.name,
               icon: p.icon,
               sortOrder: p.sortOrder,
-              widgetCount: wCount?.count ?? 0,
+              widgetCount,
+              widgets: includeWidgets ? pageWidgets : undefined,
             };
           }),
         );

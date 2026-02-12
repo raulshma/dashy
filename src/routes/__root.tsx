@@ -9,6 +9,7 @@ import appCss from '../styles.css?url'
 import { AuthProvider } from '@/hooks/use-auth'
 import { Toaster } from '@/components/ui/sonner'
 import { SkipToContent } from '@/components/ui/accessibility'
+import { GlobalCommandPalette } from '@/components/app/global-command-palette'
 import { registerBuiltinWidgets } from '@/app/widgets'
 
 let widgetsRegistered = false
@@ -67,6 +68,7 @@ function RootComponent() {
   return (
     <AuthProvider>
       <Outlet />
+      <GlobalCommandPalette />
     </AuthProvider>
   )
 }

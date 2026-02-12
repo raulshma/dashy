@@ -5,8 +5,9 @@
  * Route: /dashboards/:slug
  */
 import { useCallback, useEffect, useState } from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { getDashboardFn } from '@server/api/dashboards'
+import { z } from 'zod'
 import {
   addPageFn,
   deletePageFn,
@@ -38,6 +39,9 @@ import { PageTabs } from '@/components/dashboard/page-tabs'
 import { VersionHistory } from '@/components/dashboard/version-history'
 
 export const Route = createFileRoute('/_authed/dashboards/$slug')({
+  validateSearch: z.object({
+    page: z.string().optional(),
+  }),
   component: DashboardViewPage,
 })
 
@@ -63,6 +67,8 @@ interface PageWithWidgets extends PageSummary {
 
 function DashboardViewPage() {
   const { slug } = Route.useParams()
+  const { page: requestedPageId } = Route.useSearch()
+  const navigate = useNavigate()
 
   const [dashboard, setDashboard] = useState<DashboardDetail | null>(null)
   const [pages, setPages] = useState<Array<PageWithWidgets>>([])
@@ -97,8 +103,28 @@ function DashboardViewPage() {
           }),
         )
         setPages(pagesWithWidgets)
-        if (pagesWithWidgets.length > 0 && !activePageId) {
-          setActivePageId(pagesWithWidgets[0].id)
+
+        const hasRequestedPage =
+          requestedPageId !== undefined &&
+          pagesWithWidgets.some((p) => p.id === requestedPageId)
+        const hasPreviousPage =
+          activePageId !== null && pagesWithWidgets.some((p) => p.id === activePageId)
+
+        const nextActivePageId = hasRequestedPage
+          ? requestedPageId
+          : hasPreviousPage
+            ? activePageId
+            : (pagesWithWidgets[0]?.id ?? null)
+
+        setActivePageId(nextActivePageId)
+
+        if (nextActivePageId !== requestedPageId) {
+          void navigate({
+            to: '/dashboards/$slug',
+            params: { slug },
+            search: nextActivePageId ? { page: nextActivePageId } : {},
+            replace: true,
+          })
         }
       } else if (result.error) {
         setError(result.error.message)
@@ -108,11 +134,23 @@ function DashboardViewPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [slug, activePageId])
+  }, [slug, activePageId, requestedPageId, navigate])
 
   useEffect(() => {
-    fetchDashboard()
-  }, [slug])
+    void fetchDashboard()
+  }, [fetchDashboard])
+
+  const handlePageSelect = useCallback(
+    (pageId: string) => {
+      setActivePageId(pageId)
+      void navigate({
+        to: '/dashboards/$slug',
+        params: { slug },
+        search: { page: pageId },
+      })
+    },
+    [navigate, slug],
+  )
 
   const activePage = pages.find((p) => p.id === activePageId) ?? null
 
@@ -141,6 +179,11 @@ function DashboardViewPage() {
         }
         setPages((prev) => [...prev, newPage])
         setActivePageId(newPage.id)
+        void navigate({
+          to: '/dashboards/$slug',
+          params: { slug },
+          search: { page: newPage.id },
+        })
         setShowAddPageDialog(false)
         setNewPageName('')
       } else if (result.error) {
@@ -195,10 +238,16 @@ function DashboardViewPage() {
       const result = await deletePageFn({ data: { id: pageToEdit.id } })
 
       if (result.success) {
-        setPages((prev) => prev.filter((p) => p.id !== pageToEdit.id))
+        const remaining = pages.filter((p) => p.id !== pageToEdit.id)
+        setPages(remaining)
         if (activePageId === pageToEdit.id) {
-          const remaining = pages.filter((p) => p.id !== pageToEdit.id)
-          setActivePageId(remaining[0]?.id ?? null)
+          const nextPageId = remaining[0]?.id ?? null
+          setActivePageId(nextPageId)
+          void navigate({
+            to: '/dashboards/$slug',
+            params: { slug },
+            search: nextPageId ? { page: nextPageId } : {},
+          })
         }
         setShowDeleteDialog(false)
         setPageToEdit(null)
@@ -339,7 +388,7 @@ function DashboardViewPage() {
         </Alert>
       )}
 
-      <header className="flex items-center justify-between px-4 py-3 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="flex items-center justify-between px-4 py-3 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
         <div className="flex items-center gap-3 min-w-0">
           <Link
             to="/dashboards"
@@ -440,7 +489,7 @@ function DashboardViewPage() {
       <PageTabs
         pages={pages}
         activePageId={activePageId}
-        onPageSelect={setActivePageId}
+        onPageSelect={handlePageSelect}
         onAddPage={() => {
           setNewPageName('')
           setShowAddPageDialog(true)
