@@ -6,15 +6,27 @@
  */
 import { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { updateAccountFn, logoutFn } from '@server/api/auth';
-import type { SafeUser } from '@server/services/auth';
+import { logoutFn, updateAccountFn } from '@server/api/auth';
 
-export const Route = createFileRoute('/_authed/settings' as string)({
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
+export const Route = createFileRoute('/_authed/settings')({
   component: SettingsPage,
 });
 
 function SettingsPage() {
-  const { user } = Route.useRouteContext() as { user: SafeUser };
+  const { user } = Route.useRouteContext();
 
   const [displayName, setDisplayName] = useState(user.displayName);
   const [email, setEmail] = useState(user.email);
@@ -100,47 +112,78 @@ function SettingsPage() {
   }
 
   return (
-    <div className="settings-page">
-      <div className="settings-container">
-        <div className="settings-header">
-          <h1 className="settings-title">Account Settings</h1>
-          <p className="settings-subtitle">
-            Manage your profile, email, and password
-          </p>
-        </div>
+    <div className="container mx-auto max-w-4xl py-10 space-y-8">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Account Settings</h1>
+        <p className="text-muted-foreground">
+          Manage your profile, email, and password
+        </p>
+      </div>
 
-        {/* Feedback */}
-        {success && (
-          <div className="settings-success" role="status">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M5.5 8l2 2 3.5-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            {success}
-          </div>
-        )}
-        {error && (
-          <div className="auth-error" role="alert">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="auth-error-icon">
-              <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M8 5v3.5M8 10.5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            {error}
-          </div>
-        )}
+      {/* Feedback */}
+      {success && (
+        <Alert className="border-green-500/50 text-green-600 dark:text-green-400 [&>svg]:text-green-600 dark:[&>svg]:text-green-400">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            className="h-4 w-4"
+          >
+            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+            <path
+              d="M5.5 8l2 2 3.5-4"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <AlertTitle>Success</AlertTitle>
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
+      )}
+      {error && (
+        <Alert variant="destructive">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            className="h-4 w-4"
+          >
+            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+            <path
+              d="M8 5v3.5M8 10.5v.5"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+          </svg>
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-        {/* Profile Section */}
-        <div className="settings-section">
-          <h2 className="settings-section-title">Profile</h2>
-          <form onSubmit={handleProfileUpdate} className="settings-form" id="profile-form">
-            <div className="auth-field">
-              <label htmlFor="settings-name" className="auth-label">
-                Display name
-              </label>
-              <input
+      {/* Profile Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile</CardTitle>
+          <CardDescription>
+            Update your public display name and email address.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form
+            id="profile-form"
+            onSubmit={handleProfileUpdate}
+            className="space-y-4"
+          >
+            <div className="grid gap-2">
+              <Label htmlFor="settings-name">Display name</Label>
+              <Input
                 id="settings-name"
                 type="text"
-                className="auth-input"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 disabled={isSubmitting}
@@ -148,43 +191,50 @@ function SettingsPage() {
                 required
               />
             </div>
-            <div className="auth-field">
-              <label htmlFor="settings-email" className="auth-label">
-                Email address
-              </label>
-              <input
+            <div className="grid gap-2">
+              <Label htmlFor="settings-email">Email address</Label>
+              <Input
                 id="settings-email"
                 type="email"
-                className="auth-input"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isSubmitting}
                 required
               />
             </div>
-            <button
-              type="submit"
-              className="settings-btn settings-btn-primary"
-              disabled={isSubmitting}
-              id="save-profile"
-            >
-              {isSubmitting ? 'Saving…' : 'Save changes'}
-            </button>
           </form>
-        </div>
+        </CardContent>
+        <CardFooter className="border-t px-6 py-4">
+          <Button
+            form="profile-form"
+            type="submit"
+            disabled={isSubmitting}
+            id="save-profile"
+          >
+            {isSubmitting ? 'Saving...' : 'Save changes'}
+          </Button>
+        </CardFooter>
+      </Card>
 
-        {/* Password Section */}
-        <div className="settings-section">
-          <h2 className="settings-section-title">Change Password</h2>
-          <form onSubmit={handlePasswordChange} className="settings-form" id="password-form">
-            <div className="auth-field">
-              <label htmlFor="settings-current-pw" className="auth-label">
-                Current password
-              </label>
-              <input
+      {/* Password Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Change Password</CardTitle>
+          <CardDescription>
+            Ensure your account is using a long, random password to stay secure.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form
+            id="password-form"
+            onSubmit={handlePasswordChange}
+            className="space-y-4"
+          >
+            <div className="grid gap-2">
+              <Label htmlFor="settings-current-pw">Current password</Label>
+              <Input
                 id="settings-current-pw"
                 type="password"
-                className="auth-input"
                 autoComplete="current-password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
@@ -192,14 +242,11 @@ function SettingsPage() {
                 required
               />
             </div>
-            <div className="auth-field">
-              <label htmlFor="settings-new-pw" className="auth-label">
-                New password
-              </label>
-              <input
+            <div className="grid gap-2">
+              <Label htmlFor="settings-new-pw">New password</Label>
+              <Input
                 id="settings-new-pw"
                 type="password"
-                className="auth-input"
                 autoComplete="new-password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -208,14 +255,11 @@ function SettingsPage() {
                 minLength={8}
               />
             </div>
-            <div className="auth-field">
-              <label htmlFor="settings-confirm-pw" className="auth-label">
-                Confirm new password
-              </label>
-              <input
+            <div className="grid gap-2">
+              <Label htmlFor="settings-confirm-pw">Confirm new password</Label>
+              <Input
                 id="settings-confirm-pw"
                 type="password"
-                className="auth-input"
                 autoComplete="new-password"
                 value={confirmNewPassword}
                 onChange={(e) => setConfirmNewPassword(e.target.value)}
@@ -223,33 +267,39 @@ function SettingsPage() {
                 required
               />
             </div>
-            <button
-              type="submit"
-              className="settings-btn settings-btn-primary"
-              disabled={isSubmitting}
-              id="change-password"
-            >
-              {isSubmitting ? 'Changing…' : 'Change password'}
-            </button>
           </form>
-        </div>
+        </CardContent>
+        <CardFooter className="border-t px-6 py-4">
+          <Button
+            form="password-form"
+            type="submit"
+            disabled={isSubmitting}
+            id="change-password"
+          >
+            {isSubmitting ? 'Changing...' : 'Change password'}
+          </Button>
+        </CardFooter>
+      </Card>
 
-        {/* Danger Zone */}
-        <div className="settings-section settings-section-danger">
-          <h2 className="settings-section-title">Session</h2>
-          <p className="settings-section-desc">
+      {/* Danger Zone */}
+      <Card className="border-destructive/20">
+        <CardHeader>
+          <CardTitle className="text-destructive">Session</CardTitle>
+          <CardDescription>
             Sign out of your account on this device.
-          </p>
-          <button
-            className="settings-btn settings-btn-danger"
+          </CardDescription>
+        </CardHeader>
+        <CardFooter className="border-t border-destructive/10 px-6 py-4 bg-destructive/5 rounded-b-xl">
+          <Button
+            variant="destructive"
             onClick={handleLogout}
             disabled={isLoggingOut}
             id="logout-btn"
           >
-            {isLoggingOut ? 'Signing out…' : 'Sign out'}
-          </button>
-        </div>
-      </div>
+            {isLoggingOut ? 'Signing out...' : 'Sign out'}
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

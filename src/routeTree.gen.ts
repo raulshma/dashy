@@ -16,6 +16,8 @@ import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as AuthedDashboardsRouteImport } from './routes/_authed/dashboards'
+import { Route as AuthedDashboardsSlugRouteImport } from './routes/_authed/dashboards.$slug'
+import { Route as AuthedDashboardsSlugSettingsRouteImport } from './routes/_authed/dashboards.$slug.settings'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -51,32 +53,49 @@ const AuthedDashboardsRoute = AuthedDashboardsRouteImport.update({
   path: '/dashboards',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedDashboardsSlugRoute = AuthedDashboardsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => AuthedDashboardsRoute,
+} as any)
+const AuthedDashboardsSlugSettingsRoute =
+  AuthedDashboardsSlugSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthedDashboardsSlugRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
-  '/dashboards': typeof AuthedDashboardsRoute
+  '/dashboards': typeof AuthedDashboardsRouteWithChildren
   '/settings': typeof AuthedSettingsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/dashboards/$slug': typeof AuthedDashboardsSlugRouteWithChildren
+  '/dashboards/$slug/settings': typeof AuthedDashboardsSlugSettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
-  '/dashboards': typeof AuthedDashboardsRoute
+  '/dashboards': typeof AuthedDashboardsRouteWithChildren
   '/settings': typeof AuthedSettingsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/dashboards/$slug': typeof AuthedDashboardsSlugRouteWithChildren
+  '/dashboards/$slug/settings': typeof AuthedDashboardsSlugSettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
-  '/_authed/dashboards': typeof AuthedDashboardsRoute
+  '/_authed/dashboards': typeof AuthedDashboardsRouteWithChildren
   '/_authed/settings': typeof AuthedSettingsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/_authed/dashboards/$slug': typeof AuthedDashboardsSlugRouteWithChildren
+  '/_authed/dashboards/$slug/settings': typeof AuthedDashboardsSlugSettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -87,6 +106,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/auth/login'
     | '/auth/register'
+    | '/dashboards/$slug'
+    | '/dashboards/$slug/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -95,6 +116,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/auth/login'
     | '/auth/register'
+    | '/dashboards/$slug'
+    | '/dashboards/$slug/settings'
   id:
     | '__root__'
     | '/'
@@ -104,6 +127,8 @@ export interface FileRouteTypes {
     | '/_authed/settings'
     | '/auth/login'
     | '/auth/register'
+    | '/_authed/dashboards/$slug'
+    | '/_authed/dashboards/$slug/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -163,16 +188,52 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedDashboardsRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/dashboards/$slug': {
+      id: '/_authed/dashboards/$slug'
+      path: '/$slug'
+      fullPath: '/dashboards/$slug'
+      preLoaderRoute: typeof AuthedDashboardsSlugRouteImport
+      parentRoute: typeof AuthedDashboardsRoute
+    }
+    '/_authed/dashboards/$slug/settings': {
+      id: '/_authed/dashboards/$slug/settings'
+      path: '/settings'
+      fullPath: '/dashboards/$slug/settings'
+      preLoaderRoute: typeof AuthedDashboardsSlugSettingsRouteImport
+      parentRoute: typeof AuthedDashboardsSlugRoute
+    }
   }
 }
 
+interface AuthedDashboardsSlugRouteChildren {
+  AuthedDashboardsSlugSettingsRoute: typeof AuthedDashboardsSlugSettingsRoute
+}
+
+const AuthedDashboardsSlugRouteChildren: AuthedDashboardsSlugRouteChildren = {
+  AuthedDashboardsSlugSettingsRoute: AuthedDashboardsSlugSettingsRoute,
+}
+
+const AuthedDashboardsSlugRouteWithChildren =
+  AuthedDashboardsSlugRoute._addFileChildren(AuthedDashboardsSlugRouteChildren)
+
+interface AuthedDashboardsRouteChildren {
+  AuthedDashboardsSlugRoute: typeof AuthedDashboardsSlugRouteWithChildren
+}
+
+const AuthedDashboardsRouteChildren: AuthedDashboardsRouteChildren = {
+  AuthedDashboardsSlugRoute: AuthedDashboardsSlugRouteWithChildren,
+}
+
+const AuthedDashboardsRouteWithChildren =
+  AuthedDashboardsRoute._addFileChildren(AuthedDashboardsRouteChildren)
+
 interface AuthedRouteChildren {
-  AuthedDashboardsRoute: typeof AuthedDashboardsRoute
+  AuthedDashboardsRoute: typeof AuthedDashboardsRouteWithChildren
   AuthedSettingsRoute: typeof AuthedSettingsRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
-  AuthedDashboardsRoute: AuthedDashboardsRoute,
+  AuthedDashboardsRoute: AuthedDashboardsRouteWithChildren,
   AuthedSettingsRoute: AuthedSettingsRoute,
 }
 
