@@ -9,10 +9,12 @@ import { z } from 'zod'
 import { db } from '@server/db/connection'
 import { dashboards, pages, widgets } from '@server/db/schema'
 import { protectedPostFn } from '@server/api/auth'
+import { publishDashboardEvent } from '@server/realtime/ws'
 import {
   handleServerError,
   NotFoundError,
   ForbiddenError,
+  ValidationError,
 } from '@server/api/utils'
 
 // ─── Helpers ───────────────────────────────────────
@@ -20,7 +22,7 @@ import {
 async function verifyPageOwnership(
   pageId: string,
   userId: string,
-): Promise<void> {
+): Promise<{ pageId: string; dashboardId: string }> {
   const [page] = await db
     .select({
       id: pages.id,
@@ -43,12 +45,22 @@ async function verifyPageOwnership(
   if (!dashboard || dashboard.userId !== userId) {
     throw new ForbiddenError('You do not have access to this page')
   }
+
+  return {
+    pageId: page.id,
+    dashboardId: page.dashboardId,
+  }
 }
 
 async function verifyWidgetOwnership(
   widgetId: string,
   userId: string,
-): Promise<void> {
+): Promise<{
+  widgetId: string
+  pageId: string
+  dashboardId: string
+  updatedAt: string
+}> {
   const [widget] = await db
     .select()
     .from(widgets)
@@ -78,6 +90,23 @@ async function verifyWidgetOwnership(
   if (!dashboard || dashboard.userId !== userId) {
     throw new ForbiddenError('You do not have access to this widget')
   }
+
+  return {
+    widgetId: widget.id,
+    pageId: widget.pageId,
+    dashboardId: page.dashboardId,
+    updatedAt: widget.updatedAt,
+  }
+}
+
+function toTimestamp(value: string): number {
+  const timestamp = new Date(value).getTime()
+
+  if (!Number.isFinite(timestamp)) {
+    return 0
+  }
+
+  return timestamp
 }
 
 async function getOwnedWidget(widgetId: string, userId: string) {
@@ -125,6 +154,7 @@ const addWidgetInputSchema = z.object({
   w: z.number().int().min(1).max(12).default(1),
   h: z.number().int().min(1).max(12).default(1),
   config: z.record(z.string(), z.any()).optional(),
+  realtimeClientId: z.string().min(1).max(80).optional(),
 })
 
 export const addWidgetFn = protectedPostFn
@@ -132,7 +162,7 @@ export const addWidgetFn = protectedPostFn
   .handler(async ({ data, context }) => {
     try {
       const userId = context.user.id
-      await verifyPageOwnership(data.pageId, userId)
+      const pageContext = await verifyPageOwnership(data.pageId, userId)
 
       const [newWidget] = await db
         .insert(widgets)
@@ -151,6 +181,27 @@ export const addWidgetFn = protectedPostFn
       if (!newWidget) {
         throw new Error('Failed to create widget')
       }
+
+      publishDashboardEvent({
+        dashboardId: pageContext.dashboardId,
+        actorId: data.realtimeClientId ?? userId,
+        event: 'widget:update',
+        payload: {
+          action: 'created',
+          pageId: newWidget.pageId,
+          widget: {
+            id: newWidget.id,
+            type: newWidget.type,
+            title: newWidget.title,
+            x: newWidget.x,
+            y: newWidget.y,
+            w: newWidget.w,
+            h: newWidget.h,
+            config: newWidget.config,
+          },
+        },
+        excludeClientId: data.realtimeClientId,
+      })
 
       return {
         success: true,
@@ -179,6 +230,8 @@ const updateWidgetConfigInputSchema = z.object({
   id: z.string().uuid(),
   title: z.string().max(100).optional(),
   config: z.record(z.string(), z.unknown()).optional(),
+  realtimeClientId: z.string().min(1).max(80).optional(),
+  mutationTimestamp: z.number().int().positive().optional(),
 })
 
 export const updateWidgetConfigFn = protectedPostFn
@@ -186,7 +239,16 @@ export const updateWidgetConfigFn = protectedPostFn
   .handler(async ({ data, context }) => {
     try {
       const userId = context.user.id
-      await verifyWidgetOwnership(data.id, userId)
+      const widgetContext = await verifyWidgetOwnership(data.id, userId)
+
+      if (
+        data.mutationTimestamp !== undefined &&
+        toTimestamp(widgetContext.updatedAt) > data.mutationTimestamp
+      ) {
+        throw new ValidationError(
+          'Stale widget update rejected by last-write-wins policy',
+        )
+      }
 
       const updateValues: Record<string, unknown> = {}
       if (data.title !== undefined) {
@@ -205,6 +267,22 @@ export const updateWidgetConfigFn = protectedPostFn
       if (!updated) {
         throw new Error('Failed to update widget')
       }
+
+      publishDashboardEvent({
+        dashboardId: widgetContext.dashboardId,
+        actorId: data.realtimeClientId ?? userId,
+        event: 'widget:update',
+        payload: {
+          action: 'updated',
+          pageId: updated.pageId,
+          widgetId: updated.id,
+          patch: {
+            ...(data.title !== undefined ? { title: updated.title } : {}),
+            ...(data.config !== undefined ? { config: updated.config } : {}),
+          },
+        },
+        excludeClientId: data.realtimeClientId,
+      })
 
       return {
         success: true,
@@ -241,6 +319,8 @@ const updateWidgetPositionsInputSchema = z.object({
       }),
     )
     .min(1),
+  realtimeClientId: z.string().min(1).max(80).optional(),
+  mutationTimestamp: z.number().int().positive().optional(),
 })
 
 export const updateWidgetPositionsFn = protectedPostFn
@@ -248,10 +328,37 @@ export const updateWidgetPositionsFn = protectedPostFn
   .handler(async ({ data, context }) => {
     try {
       const userId = context.user.id
+      let dashboardId: string | null = null
+      let pageId: string | null = null
 
       let updatedCount = 0
       for (const pos of data.positions) {
-        await verifyWidgetOwnership(pos.id, userId)
+        const widgetContext = await verifyWidgetOwnership(pos.id, userId)
+
+        if (
+          data.mutationTimestamp !== undefined &&
+          toTimestamp(widgetContext.updatedAt) > data.mutationTimestamp
+        ) {
+          throw new ValidationError(
+            'Stale layout update rejected by last-write-wins policy',
+          )
+        }
+
+        if (!dashboardId) {
+          dashboardId = widgetContext.dashboardId
+        } else if (dashboardId !== widgetContext.dashboardId) {
+          throw new ValidationError(
+            'All position updates must belong to the same dashboard',
+          )
+        }
+
+        if (!pageId) {
+          pageId = widgetContext.pageId
+        } else if (pageId !== widgetContext.pageId) {
+          throw new ValidationError(
+            'All position updates must belong to the same page',
+          )
+        }
 
         const [result] = await db
           .update(widgets)
@@ -269,6 +376,25 @@ export const updateWidgetPositionsFn = protectedPostFn
         }
       }
 
+      if (dashboardId && pageId && updatedCount > 0) {
+        publishDashboardEvent({
+          dashboardId,
+          actorId: data.realtimeClientId ?? userId,
+          event: 'layout:change',
+          payload: {
+            pageId,
+            positions: data.positions.map((position) => ({
+              id: position.id,
+              x: position.x,
+              y: position.y,
+              w: position.w,
+              h: position.h,
+            })),
+          },
+          excludeClientId: data.realtimeClientId,
+        })
+      }
+
       return { success: true, data: { updated: updatedCount } }
     } catch (error) {
       return handleServerError(error)
@@ -279,6 +405,7 @@ export const updateWidgetPositionsFn = protectedPostFn
 
 const deleteWidgetInputSchema = z.object({
   id: z.string().uuid(),
+  realtimeClientId: z.string().min(1).max(80).optional(),
 })
 
 export const deleteWidgetFn = protectedPostFn
@@ -286,9 +413,21 @@ export const deleteWidgetFn = protectedPostFn
   .handler(async ({ data, context }) => {
     try {
       const userId = context.user.id
-      await verifyWidgetOwnership(data.id, userId)
+      const widgetContext = await verifyWidgetOwnership(data.id, userId)
 
       await db.delete(widgets).where(eq(widgets.id, data.id))
+
+      publishDashboardEvent({
+        dashboardId: widgetContext.dashboardId,
+        actorId: data.realtimeClientId ?? userId,
+        event: 'widget:update',
+        payload: {
+          action: 'deleted',
+          pageId: widgetContext.pageId,
+          widgetId: data.id,
+        },
+        excludeClientId: data.realtimeClientId,
+      })
 
       return { success: true, data: { deleted: true } }
     } catch (error) {
@@ -302,6 +441,7 @@ const duplicateWidgetInputSchema = z.object({
   id: z.string().uuid(),
   offsetX: z.number().int().min(-12).max(12).default(1),
   offsetY: z.number().int().min(-12).max(12).default(1),
+  realtimeClientId: z.string().min(1).max(80).optional(),
 })
 
 export const duplicateWidgetFn = protectedPostFn
@@ -338,6 +478,35 @@ export const duplicateWidgetFn = protectedPostFn
 
       if (!duplicatedWidget) {
         throw new Error('Failed to duplicate widget')
+      }
+
+      const [sourcePage] = await db
+        .select({ dashboardId: pages.dashboardId })
+        .from(pages)
+        .where(eq(pages.id, duplicatedWidget.pageId))
+        .limit(1)
+
+      if (sourcePage) {
+        publishDashboardEvent({
+          dashboardId: sourcePage.dashboardId,
+          actorId: data.realtimeClientId ?? userId,
+          event: 'widget:update',
+          payload: {
+            action: 'created',
+            pageId: duplicatedWidget.pageId,
+            widget: {
+              id: duplicatedWidget.id,
+              type: duplicatedWidget.type,
+              title: duplicatedWidget.title,
+              x: duplicatedWidget.x,
+              y: duplicatedWidget.y,
+              w: duplicatedWidget.w,
+              h: duplicatedWidget.h,
+              config: duplicatedWidget.config,
+            },
+          },
+          excludeClientId: data.realtimeClientId,
+        })
       }
 
       return {

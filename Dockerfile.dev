@@ -1,0 +1,25 @@
+# Dashy - Development Dockerfile
+# Simple development environment with hot reload
+
+FROM oven/bun:1
+
+WORKDIR /app
+
+# Copy package files first for better caching
+COPY package.json bun.lock* ./
+
+# Install all dependencies (including dev)
+RUN bun install --frozen-lockfile
+
+# Copy source code
+COPY . .
+
+# Set development environment
+ENV NODE_ENV=development
+ENV PORT=3000
+
+# Expose port
+EXPOSE 3000
+
+# Start development server with hot reload
+CMD ["bun", "run", "dev", "--host"]

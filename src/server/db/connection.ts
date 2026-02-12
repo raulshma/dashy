@@ -9,16 +9,16 @@
  *   import { db } from '@server/db/connection'
  *   const users = await db.select().from(usersTable)
  */
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { sql } from 'drizzle-orm';
-import { config } from '@server/config';
-import * as schema from './schema/index';
+import Database from 'better-sqlite3'
+import { drizzle } from 'drizzle-orm/better-sqlite3'
+import { sql } from 'drizzle-orm'
+import { config } from '@server/config'
+import * as schema from './schema/index'
 
 interface DatabaseSchemaValidationResult {
-  ok: boolean;
-  missingTables: string[];
-  missingColumns: Array<{ table: string; column: string }>;
+  ok: boolean
+  missingTables: string[]
+  missingColumns: Array<{ table: string; column: string }>
 }
 
 const expectedSchema: Record<string, string[]> = {
@@ -105,31 +105,77 @@ const expectedSchema: Record<string, string[]> = {
     'change_description',
     'created_at',
   ],
-};
+  plugins: [
+    'id',
+    'name',
+    'version',
+    'description',
+    'author_name',
+    'author_email',
+    'author_url',
+    'license',
+    'repository',
+    'homepage',
+    'main',
+    'types',
+    'icon',
+    'screenshots',
+    'keywords',
+    'engines_dashy',
+    'permissions',
+    'network_allowlist',
+    'contributes',
+    'activation_events',
+    'deprecated',
+    'installed_by',
+    'install_source',
+    'install_path',
+    'checksum',
+    'installed_at',
+    'state',
+    'last_activated',
+    'last_deactivated',
+    'error_message',
+    'error_stack',
+    'error_timestamp',
+    'granted_permissions',
+    'denied_permissions',
+    'created_at',
+    'updated_at',
+  ],
+  plugin_storage: [
+    'id',
+    'plugin_id',
+    'key',
+    'value',
+    'created_at',
+    'updated_at',
+  ],
+}
 
 /**
  * Create the underlying better-sqlite3 instance with PRAGMAs.
  */
 function createSqliteInstance(): Database.Database {
-  const sqlite = new Database(config.database.path);
+  const sqlite = new Database(config.database.path)
 
   // ── Performance PRAGMAs ──────────────────────────
   // WAL mode: allows concurrent readers while writing
-  sqlite.pragma('journal_mode = WAL');
+  sqlite.pragma('journal_mode = WAL')
   // Synchronous NORMAL: good balance between safety and speed
-  sqlite.pragma('synchronous = NORMAL');
+  sqlite.pragma('synchronous = NORMAL')
   // Enable foreign key enforcement (off by default in SQLite)
-  sqlite.pragma('foreign_keys = ON');
+  sqlite.pragma('foreign_keys = ON')
   // Increase cache size (negative = KiB, -64000 ≈ 64 MB)
-  sqlite.pragma('cache_size = -64000');
+  sqlite.pragma('cache_size = -64000')
   // Memory-map up to 256 MB for I/O performance
-  sqlite.pragma('mmap_size = 268435456');
+  sqlite.pragma('mmap_size = 268435456')
   // Busy timeout: wait up to 5s when the DB is locked
-  sqlite.pragma('busy_timeout = 5000');
+  sqlite.pragma('busy_timeout = 5000')
   // Temp store in memory for faster temp table operations
-  sqlite.pragma('temp_store = MEMORY');
+  sqlite.pragma('temp_store = MEMORY')
 
-  return sqlite;
+  return sqlite
 }
 
 /**
@@ -141,26 +187,26 @@ export function validateDatabaseSchema(): DatabaseSchemaValidationResult {
       `SELECT name FROM sqlite_master
        WHERE type = 'table' AND name NOT LIKE 'sqlite_%'`,
     )
-    .all() as Array<{ name: string }>;
+    .all() as Array<{ name: string }>
 
-  const existingTables = new Set(tableRows.map((row) => row.name));
-  const missingTables: string[] = [];
-  const missingColumns: Array<{ table: string; column: string }> = [];
+  const existingTables = new Set(tableRows.map((row) => row.name))
+  const missingTables: string[] = []
+  const missingColumns: Array<{ table: string; column: string }> = []
 
   for (const [table, expectedColumns] of Object.entries(expectedSchema)) {
     if (!existingTables.has(table)) {
-      missingTables.push(table);
-      continue;
+      missingTables.push(table)
+      continue
     }
 
     const pragmaRows = sqlite
       .prepare(`PRAGMA table_info(${table})`)
-      .all() as Array<{ name: string }>;
-    const existingColumns = new Set(pragmaRows.map((row) => row.name));
+      .all() as Array<{ name: string }>
+    const existingColumns = new Set(pragmaRows.map((row) => row.name))
 
     for (const column of expectedColumns) {
       if (!existingColumns.has(column)) {
-        missingColumns.push({ table, column });
+        missingColumns.push({ table, column })
       }
     }
   }
@@ -169,7 +215,7 @@ export function validateDatabaseSchema(): DatabaseSchemaValidationResult {
     ok: missingTables.length === 0 && missingColumns.length === 0,
     missingTables,
     missingColumns,
-  };
+  }
 }
 
 function assertDatabaseSchemaOnStartup(): void {
@@ -177,31 +223,31 @@ function assertDatabaseSchemaOnStartup(): void {
     process.env.SKIP_DB_SCHEMA_VALIDATION === '1' ||
     process.argv.some((arg) =>
       /drizzle|migrate|seed|db:|typecheck|lint|test|build/i.test(arg),
-    );
+    )
 
   if (skipValidation) {
-    return;
+    return
   }
 
-  const result = validateDatabaseSchema();
+  const result = validateDatabaseSchema()
   if (result.ok) {
-    return;
+    return
   }
 
   const missingTablesMessage =
     result.missingTables.length > 0
       ? `Missing tables: ${result.missingTables.join(', ')}`
-      : null;
+      : null
   const missingColumnsMessage =
     result.missingColumns.length > 0
       ? `Missing columns: ${result.missingColumns
           .map((item) => `${item.table}.${item.column}`)
           .join(', ')}`
-      : null;
+      : null
 
   const details = [missingTablesMessage, missingColumnsMessage]
     .filter(Boolean)
-    .join('\n');
+    .join('\n')
 
   throw new Error(
     [
@@ -213,14 +259,14 @@ function assertDatabaseSchemaOnStartup(): void {
     ]
       .filter(Boolean)
       .join('\n'),
-  );
+  )
 }
 
 /** The raw better-sqlite3 instance */
-const sqlite = createSqliteInstance();
+const sqlite = createSqliteInstance()
 
 // Validate DB schema at process startup (with explicit skip controls).
-assertDatabaseSchemaOnStartup();
+assertDatabaseSchemaOnStartup()
 
 /**
  * The Drizzle ORM database instance.
@@ -228,7 +274,7 @@ assertDatabaseSchemaOnStartup();
  *
  * Schema is passed so Drizzle can infer relations for the relational query API.
  */
-export const db = drizzle({ client: sqlite, schema });
+export const db = drizzle({ client: sqlite, schema })
 
 /**
  * Check database health by running a simple query.
@@ -236,10 +282,10 @@ export const db = drizzle({ client: sqlite, schema });
  */
 export function isDatabaseHealthy(): boolean {
   try {
-    db.run(sql`SELECT 1`);
-    return true;
+    db.run(sql`SELECT 1`)
+    return true
   } catch {
-    return false;
+    return false
   }
 }
 
@@ -247,5 +293,5 @@ export function isDatabaseHealthy(): boolean {
  * Gracefully close the database connection.
  */
 export function closeDatabase(): void {
-  sqlite.close();
+  sqlite.close()
 }

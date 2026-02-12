@@ -6,37 +6,55 @@
  */
 
 // ── Tables ─────────────────────────────────────
-export { users } from './users';
-export type { InsertUser, SelectUser } from './users';
+export { users } from './users'
+export type { InsertUser, SelectUser } from './users'
 
-export { dashboards } from './dashboards';
-export type { InsertDashboard, SelectDashboard } from './dashboards';
+export { dashboards } from './dashboards'
+export type { InsertDashboard, SelectDashboard } from './dashboards'
 
-export { pages } from './pages';
-export type { InsertPage, SelectPage } from './pages';
+export { pages } from './pages'
+export type { InsertPage, SelectPage } from './pages'
 
-export { widgets } from './widgets';
-export type { InsertWidget, SelectWidget } from './widgets';
+export { widgets } from './widgets'
+export type { InsertWidget, SelectWidget } from './widgets'
 
-export { widgetConfigs } from './widget-configs';
-export type { InsertWidgetConfig, SelectWidgetConfig } from './widget-configs';
+export { widgetConfigs } from './widget-configs'
+export type { InsertWidgetConfig, SelectWidgetConfig } from './widget-configs'
 
-export { templates } from './templates';
+export { templates } from './templates'
 export type {
   InsertTemplate,
   SelectTemplate,
   TemplateSchema,
-} from './templates';
+} from './templates'
 
-export { shareLinks } from './share-links';
-export type { InsertShareLink, SelectShareLink } from './share-links';
+export { shareLinks } from './share-links'
+export type { InsertShareLink, SelectShareLink } from './share-links'
 
-export { dashboardVersions } from './dashboard-versions';
+export { dashboardVersions } from './dashboard-versions'
 export type {
   InsertDashboardVersion,
   SelectDashboardVersion,
   DashboardSnapshot,
-} from './dashboard-versions';
+} from './dashboard-versions'
+
+export { plugins, pluginStorage } from './plugins'
+export type {
+  InsertPlugin,
+  SelectPlugin,
+  InsertPluginStorage,
+  SelectPluginStorage,
+} from './plugins'
+
+export { tenants, tenantMemberships } from './tenants'
+export type {
+  Tenant,
+  InsertTenant,
+  TenantMembership,
+  InsertTenantMembership,
+  TenantPlan,
+  TenantRole,
+} from './tenants'
 
 // ── Relations ──────────────────────────────────
 export {
@@ -48,4 +66,6 @@ export {
   templatesRelations,
   shareLinksRelations,
   dashboardVersionsRelations,
-} from './relations';
+  pluginsRelations,
+  pluginStorageRelations,
+} from './relations'

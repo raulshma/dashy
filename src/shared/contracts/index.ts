@@ -28,3 +28,40 @@ export type {
   UpdateWidgetPositionInput,
   CreateShareLinkInput,
 } from './dashboard'
+
+export type {
+  RealtimeProtocolVersion,
+  RealtimeMessageBase,
+  RealtimeClientMessage,
+  RealtimeServerMessage,
+} from './realtime'
+
+export type {
+  PluginPermission,
+  PluginAuthor,
+  SemVer,
+  PluginId,
+  PluginManifest,
+  PluginState,
+  PluginInstallSource,
+  PluginInstallInfo,
+  PluginStatus,
+  PluginCommand,
+  PluginSettingsDefinition,
+} from './plugin'
+
+export {
+  pluginPermissionSchema,
+  pluginAuthorSchema,
+  semVerSchema,
+  pluginIdSchema,
+  pluginManifestSchema,
+  pluginStateSchema,
+  pluginInstallSourceSchema,
+  pluginInstallInfoSchema,
+  pluginStatusSchema,
+  pluginCommandSchema,
+  pluginSettingsDefinitionSchema,
+  validatePluginManifest,
+  parsePluginId,
+} from './plugin'

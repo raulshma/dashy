@@ -15,7 +15,10 @@
     "db:migrate": "bun run src/server/db/migrate.ts",
     "db:push": "drizzle-kit push",
     "db:seed": "bun run src/server/db/seed.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:backup": "bun run scripts/backup.ts",
+    "db:backup:list": "bun run scripts/backup.ts list",
+    "db:restore": "bun run scripts/backup.ts restore"
   },
   "dependencies": {
     "@base-ui/react": "^1.1.0",

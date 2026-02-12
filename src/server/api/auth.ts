@@ -7,23 +7,86 @@
  * Usage:
  *   import { loginFn, registerFn, logoutFn, getCurrentUserFn } from '@server/api/auth'
  */
-import { createMiddleware, createServerFn } from '@tanstack/react-start';
-import { redirect } from '@tanstack/react-router';
-import { eq } from 'drizzle-orm';
-import { z } from 'zod';
-import { db } from '@server/db/connection';
-import { users } from '@server/db/schema';
+import { createMiddleware, createServerFn } from '@tanstack/react-start'
+import { redirect } from '@tanstack/react-router'
+import { eq } from 'drizzle-orm'
+import { z } from 'zod'
+import { db } from '@server/db/connection'
+import { users } from '@server/db/schema'
 import {
   ConflictError,
   handleServerError,
   UnauthorizedError,
   ValidationError,
-} from '@server/api/utils';
-import { hashPassword, sanitizeUser, verifyPassword } from '@server/services/auth';
-import { useAppSession } from '@server/services/session';
-import { loginSchema, registerSchema } from '@shared/schemas';
-import type { SafeUser } from '@server/services/auth';
-import type { ApiResponse } from '@shared/types';
+} from '@server/api/utils'
+import {
+  hashPassword,
+  sanitizeUser,
+  verifyPassword,
+} from '@server/services/auth'
+import { useAppSession } from '@server/services/session'
+import { loginSchema, registerSchema } from '@shared/schemas'
+import { globalRateLimiter } from '@server/services/rate-limiter'
+import type { SafeUser } from '@server/services/auth'
+import type { ApiResponse } from '@shared/types'
+
+function getClientIp(context: unknown): string {
+  const ctx = context as { request?: { headers: Headers } }
+  const headers = ctx?.request?.headers
+  if (headers) {
+    const forwarded = headers.get('x-forwarded-for')
+    if (forwarded) {
+      return forwarded.split(',')[0]?.trim() ?? 'unknown'
+    }
+    const realIp = headers.get('x-real-ip')
+    if (realIp) {
+      return realIp
+    }
+  }
+  return 'unknown'
+}
+
+export class RateLimitError extends Error {
+  public readonly retryAfter: number
+
+  constructor(retryAfter: number) {
+    super(`Too many requests. Try again in ${retryAfter} seconds.`)
+    this.name = 'RateLimitError'
+    this.retryAfter = retryAfter
+  }
+}
+
+export const rateLimitMiddleware = createMiddleware({
+  type: 'function',
+}).server(async ({ next, context }) => {
+  const ip = getClientIp(context)
+  const ctx = context as unknown as { user?: { id: string } }
+  const userId = ctx?.user?.id
+
+  const result = globalRateLimiter.checkAndRecord(ip, 'auth', userId)
+
+  if (!result.allowed) {
+    throw new RateLimitError(result.retryAfter ?? 60)
+  }
+
+  return next()
+})
+
+export const strictRateLimitMiddleware = createMiddleware({
+  type: 'function',
+}).server(async ({ next, context }) => {
+  const ip = getClientIp(context)
+  const ctx = context as unknown as { user?: { id: string } }
+  const userId = ctx?.user?.id
+
+  const result = globalRateLimiter.checkAndRecord(ip, 'authStrict', userId)
+
+  if (!result.allowed) {
+    throw new RateLimitError(result.retryAfter ?? 60)
+  }
+
+  return next()
+})
 
 // ─── Auth Middleware ──────────────────────────────
 
@@ -33,28 +96,28 @@ import type { ApiResponse } from '@shared/types';
  */
 export const authMiddleware = createMiddleware({ type: 'function' }).server(
   async ({ next }) => {
-    const session = await useAppSession();
-    const userId = session.data.userId;
+    const session = await useAppSession()
+    const userId = session.data.userId
 
     if (!userId) {
-      throw new UnauthorizedError('Authentication required');
+      throw new UnauthorizedError('Authentication required')
     }
 
     const [user] = await db
       .select()
       .from(users)
       .where(eq(users.id, userId))
-      .limit(1);
+      .limit(1)
 
     if (!user || !user.isActive) {
       // Session references a deleted or deactivated user — clear it
-      await session.clear();
-      throw new UnauthorizedError('Session expired');
+      await session.clear()
+      throw new UnauthorizedError('Session expired')
     }
 
-    return next({ context: { user } });
+    return next({ context: { user } })
   },
-);
+)
 
 // ─── Protected Server Function Factory ──────────
 
@@ -64,11 +127,11 @@ export const authMiddleware = createMiddleware({ type: 'function' }).server(
  */
 export const protectedGetFn = createServerFn({ method: 'GET' }).middleware([
   authMiddleware,
-]);
+])
 
 export const protectedPostFn = createServerFn({ method: 'POST' }).middleware([
   authMiddleware,
-]);
+])
 
 // ─── Registration ───────────────────────────────
 
@@ -78,6 +141,7 @@ export const protectedPostFn = createServerFn({ method: 'POST' }).middleware([
  * Flow: validate → check uniqueness → hash password → insert → create session → return user
  */
 export const registerFn = createServerFn({ method: 'POST' })
+  .middleware([rateLimitMiddleware])
   .inputValidator(registerSchema)
   .handler(async ({ data }): Promise<ApiResponse<SafeUser>> => {
     try {
@@ -86,14 +150,14 @@ export const registerFn = createServerFn({ method: 'POST' })
         .select({ id: users.id })
         .from(users)
         .where(eq(users.email, data.email.toLowerCase()))
-        .limit(1);
+        .limit(1)
 
       if (existing) {
-        throw new ConflictError('An account with this email already exists');
+        throw new ConflictError('An account with this email already exists')
       }
 
       // Hash password
-      const passwordHash = await hashPassword(data.password);
+      const passwordHash = await hashPassword(data.password)
 
       // Insert user
       const [newUser] = await db
@@ -103,25 +167,25 @@ export const registerFn = createServerFn({ method: 'POST' })
           passwordHash,
           displayName: data.displayName,
         })
-        .returning();
+        .returning()
 
       if (!newUser) {
-        throw new Error('Failed to create user');
+        throw new Error('Failed to create user')
       }
 
       // Create session
-      const session = await useAppSession();
+      const session = await useAppSession()
       await session.update({
         userId: newUser.id,
         email: newUser.email,
         displayName: newUser.displayName,
-      });
+      })
 
-      return { success: true, data: sanitizeUser(newUser) };
+      return { success: true, data: sanitizeUser(newUser) }
     } catch (error) {
-      return handleServerError(error);
+      return handleServerError(error)
     }
-  });
+  })
 
 // ─── Login ──────────────────────────────────────
 
@@ -131,6 +195,7 @@ export const registerFn = createServerFn({ method: 'POST' })
  * Flow: validate → find user → verify password → create session
  */
 export const loginFn = createServerFn({ method: 'POST' })
+  .middleware([strictRateLimitMiddleware])
   .inputValidator(loginSchema)
   .handler(async ({ data }): Promise<ApiResponse<SafeUser>> => {
     try {
@@ -139,50 +204,48 @@ export const loginFn = createServerFn({ method: 'POST' })
         .select()
         .from(users)
         .where(eq(users.email, data.email.toLowerCase()))
-        .limit(1);
+        .limit(1)
 
       if (!user) {
         // Use generic message to prevent email enumeration
-        throw new UnauthorizedError('Invalid email or password');
+        throw new UnauthorizedError('Invalid email or password')
       }
 
       if (!user.isActive) {
-        throw new UnauthorizedError('Account has been deactivated');
+        throw new UnauthorizedError('Account has been deactivated')
       }
 
       // Verify password
-      const isValid = await verifyPassword(data.password, user.passwordHash);
+      const isValid = await verifyPassword(data.password, user.passwordHash)
       if (!isValid) {
-        throw new UnauthorizedError('Invalid email or password');
+        throw new UnauthorizedError('Invalid email or password')
       }
 
       // Create session
-      const session = await useAppSession();
+      const session = await useAppSession()
       await session.update({
         userId: user.id,
         email: user.email,
         displayName: user.displayName,
-      });
+      })
 
-      return { success: true, data: sanitizeUser(user) };
+      return { success: true, data: sanitizeUser(user) }
     } catch (error) {
-      return handleServerError(error);
+      return handleServerError(error)
     }
-  });
+  })
 
 // ─── Logout ─────────────────────────────────────
 
 /**
  * Destroy the current session and redirect to login.
  */
-export const logoutFn = createServerFn({ method: 'POST' }).handler(
-  async () => {
-    const session = await useAppSession();
-    await session.clear();
-    // eslint-disable-next-line @typescript-eslint/only-throw-error
-    throw redirect({ to: '/auth/login' as string });
-  },
-);
+export const logoutFn = createServerFn({ method: 'POST' }).handler(async () => {
+  const session = await useAppSession()
+  await session.clear()
+  // eslint-disable-next-line @typescript-eslint/only-throw-error
+  throw redirect({ to: '/auth/login' as string })
+})
 
 // ─── Get Current User ───────────────────────────
 
@@ -193,30 +256,30 @@ export const logoutFn = createServerFn({ method: 'POST' }).handler(
 export const getCurrentUserFn = createServerFn({ method: 'GET' }).handler(
   async (): Promise<SafeUser | null> => {
     try {
-      const session = await useAppSession();
-      const userId = session.data.userId;
+      const session = await useAppSession()
+      const userId = session.data.userId
 
       if (!userId) {
-        return null;
+        return null
       }
 
       const [user] = await db
         .select()
         .from(users)
         .where(eq(users.id, userId))
-        .limit(1);
+        .limit(1)
 
       if (!user || !user.isActive) {
-        await session.clear();
-        return null;
+        await session.clear()
+        return null
       }
 
-      return sanitizeUser(user);
+      return sanitizeUser(user)
     } catch {
-      return null;
+      return null
     }
   },
-);
+)
 
 // ─── Update Account Schema ──────────────────────
 
@@ -233,7 +296,7 @@ const updateAccountSchema = z.object({
       'Password must contain uppercase, lowercase, and a digit',
     )
     .optional(),
-});
+})
 
 // ─── Update Account ─────────────────────────────
 
@@ -244,64 +307,64 @@ export const updateAccountFn = protectedPostFn
   .inputValidator(updateAccountSchema)
   .handler(async ({ data, context }): Promise<ApiResponse<SafeUser>> => {
     try {
-      const userId = context.user.id;
+      const userId = context.user.id
 
-      const updateValues: Record<string, unknown> = {};
+      const updateValues: Record<string, unknown> = {}
 
       // Update display name
       if (data.displayName !== undefined) {
-        updateValues.displayName = data.displayName;
+        updateValues.displayName = data.displayName
       }
 
       // Update email
       if (data.email !== undefined) {
-        const normalizedEmail = data.email.toLowerCase();
+        const normalizedEmail = data.email.toLowerCase()
 
         // Check for existing user with this email
         const [existing] = await db
           .select({ id: users.id })
           .from(users)
           .where(eq(users.email, normalizedEmail))
-          .limit(1);
+          .limit(1)
 
         if (existing && existing.id !== userId) {
-          throw new ConflictError('An account with this email already exists');
+          throw new ConflictError('An account with this email already exists')
         }
 
-        updateValues.email = normalizedEmail;
+        updateValues.email = normalizedEmail
       }
 
       // Change password
       if (data.newPassword) {
         if (!data.currentPassword) {
-          throw new ValidationError('Current password is required');
+          throw new ValidationError('Current password is required')
         }
 
         const [currentUser] = await db
           .select()
           .from(users)
           .where(eq(users.id, userId))
-          .limit(1);
+          .limit(1)
 
         if (!currentUser) {
-          throw new UnauthorizedError('User not found');
+          throw new UnauthorizedError('User not found')
         }
 
         const isCurrentValid = await verifyPassword(
           data.currentPassword,
           currentUser.passwordHash,
-        );
+        )
 
         if (!isCurrentValid) {
-          throw new ValidationError('Current password is incorrect');
+          throw new ValidationError('Current password is incorrect')
         }
 
-        updateValues.passwordHash = await hashPassword(data.newPassword);
+        updateValues.passwordHash = await hashPassword(data.newPassword)
       }
 
       // Nothing to update
       if (Object.keys(updateValues).length === 0) {
-        throw new ValidationError('No changes provided');
+        throw new ValidationError('No changes provided')
       }
 
       // Apply update
@@ -309,22 +372,22 @@ export const updateAccountFn = protectedPostFn
         .update(users)
         .set(updateValues)
         .where(eq(users.id, userId))
-        .returning();
+        .returning()
 
       if (!updatedUser) {
-        throw new Error('Failed to update user');
+        throw new Error('Failed to update user')
       }
 
       // Update session with new values
-      const session = await useAppSession();
+      const session = await useAppSession()
       await session.update({
         userId: updatedUser.id,
         email: updatedUser.email,
         displayName: updatedUser.displayName,
-      });
+      })
 
-      return { success: true, data: sanitizeUser(updatedUser) };
+      return { success: true, data: sanitizeUser(updatedUser) }
     } catch (error) {
-      return handleServerError(error);
+      return handleServerError(error)
     }
-  });
+  })

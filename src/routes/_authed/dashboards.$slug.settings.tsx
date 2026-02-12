@@ -1,7 +1,7 @@
 /**
  * Dashboard Settings Page
  *
- * Allows editing dashboard name, slug, description, and visibility.
+ * Allows editing dashboard name, slug, description, visibility, and share links.
  * Route: /dashboards/:slug/settings
  */
 import { useCallback, useEffect, useState } from 'react'
@@ -12,6 +12,9 @@ import {
   updateDashboardFn,
 } from '@server/api/dashboards'
 import type { DashboardDetail } from '@server/api/dashboards'
+import { saveDashboardAsTemplateFn } from '@server/api/templates'
+import type { ApiResponse } from '@shared/types'
+import { toast } from 'sonner'
 
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,7 +25,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
@@ -38,6 +40,20 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { ShareLinksManager } from '@/components/dashboard/share-links-manager'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+
+function asApiResponse<T>(value: unknown): ApiResponse<T> {
+  return value as ApiResponse<T>
+}
 
 export const Route = createFileRoute('/_authed/dashboards/$slug/settings')({
   component: DashboardSettingsPage,
@@ -58,13 +74,19 @@ function DashboardSettingsPage() {
   const [description, setDescription] = useState('')
   const [isPublic, setIsPublic] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState('')
+  const [showTemplateDialog, setShowTemplateDialog] = useState(false)
+  const [templateName, setTemplateName] = useState('')
+  const [templateCategory, setTemplateCategory] = useState('')
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false)
 
   const fetchDashboard = useCallback(async () => {
     setIsLoading(true)
     setError(null)
 
     try {
-      const result = await getDashboardFn({ data: { identifier: slug } })
+      const result = asApiResponse<DashboardDetail>(
+        await getDashboardFn({ data: { identifier: slug } }),
+      )
 
       if (result.success && result.data) {
         setDashboard(result.data)
@@ -95,15 +117,17 @@ function DashboardSettingsPage() {
     setSuccess(null)
 
     try {
-      const result = await updateDashboardFn({
-        data: {
-          id: dashboard.id,
-          name: name.trim(),
-          slug: slugInput.trim() || undefined,
-          description: description.trim() || undefined,
-          isPublic,
-        },
-      })
+      const result = asApiResponse<DashboardDetail>(
+        await updateDashboardFn({
+          data: {
+            id: dashboard.id,
+            name: name.trim(),
+            slug: slugInput.trim() || undefined,
+            description: description.trim() || undefined,
+            isPublic,
+          },
+        }),
+      )
 
       if (result.success && result.data) {
         setDashboard(result.data)
@@ -128,9 +152,11 @@ function DashboardSettingsPage() {
     if (!dashboard || deleteConfirm !== dashboard.name) return
 
     try {
-      const result = await deleteDashboardFn({
-        data: { id: dashboard.id, permanent: false },
-      })
+      const result = asApiResponse<{ deleted: boolean }>(
+        await deleteDashboardFn({
+          data: { id: dashboard.id, permanent: false },
+        }),
+      )
 
       if (result.success) {
         void navigate({ to: '/dashboards' })
@@ -139,6 +165,36 @@ function DashboardSettingsPage() {
       }
     } catch {
       setError('Failed to delete dashboard')
+    }
+  }
+
+  async function handleSaveAsTemplate() {
+    if (!dashboard) return
+
+    setIsSavingTemplate(true)
+    try {
+      const result = asApiResponse<{ id: string }>(
+        await saveDashboardAsTemplateFn({
+          data: {
+            dashboardId: dashboard.id,
+            name: templateName.trim() || `${dashboard.name} Template`,
+            category: templateCategory.trim() || undefined,
+          },
+        }),
+      )
+
+      if (result.success) {
+        toast.success('Template saved successfully')
+        setShowTemplateDialog(false)
+        setTemplateName('')
+        setTemplateCategory('')
+      } else if (result.error) {
+        toast.error(result.error.message)
+      }
+    } catch {
+      toast.error('Failed to save template')
+    } finally {
+      setIsSavingTemplate(false)
     }
   }
 
@@ -307,11 +363,11 @@ function DashboardSettingsPage() {
               />
             </div>
           </CardContent>
-          <CardFooter className="flex justify-end">
+          <div className="px-6 pb-6 flex justify-end">
             <Button type="submit" disabled={isSaving}>
               {isSaving ? 'Saving...' : 'Save Changes'}
             </Button>
-          </CardFooter>
+          </div>
         </Card>
       </form>
 
@@ -339,6 +395,83 @@ function DashboardSettingsPage() {
               <dd>{new Date(dashboard.updatedAt).toLocaleDateString()}</dd>
             </div>
           </dl>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Template</CardTitle>
+          <CardDescription>
+            Save this dashboard as a reusable template.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Create a template from this dashboard to quickly create similar
+            dashboards later.
+          </p>
+          <Dialog
+            open={showTemplateDialog}
+            onOpenChange={setShowTemplateDialog}
+          >
+            <DialogTrigger
+              render={<Button variant="outline">Save as Template</Button>}
+            />
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Save as Template</DialogTitle>
+                <DialogDescription>
+                  Create a reusable template from this dashboard.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="template-name">Template Name</Label>
+                  <Input
+                    id="template-name"
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    placeholder={`${dashboard.name} Template`}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="template-category">Category (optional)</Label>
+                  <Input
+                    id="template-category"
+                    value={templateCategory}
+                    onChange={(e) => setTemplateCategory(e.target.value)}
+                    placeholder="e.g., homelab, developer, personal"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowTemplateDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveAsTemplate}
+                  disabled={isSavingTemplate}
+                >
+                  {isSavingTemplate ? 'Saving...' : 'Save Template'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Sharing</CardTitle>
+          <CardDescription>
+            Create and manage shareable links to this dashboard.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ShareLinksManager dashboardId={dashboard.id} />
         </CardContent>
       </Card>
 

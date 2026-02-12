@@ -22,6 +22,7 @@ import {
   updateWidgetPositionsFn,
 } from '@server/api/widgets'
 import type { DashboardDetail } from '@server/api/dashboards'
+import type { RealtimeServerMessage } from '@shared/contracts'
 import type { ApiResponse } from '@shared/types'
 
 import { getWidgetDefinition, WidgetRenderer } from '@/app/widgets'
@@ -52,6 +53,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useActionHistory } from '@/hooks/use-action-history'
 import { useEditMode } from '@/hooks/use-edit-mode'
+import { useOptimisticMutations } from '@/hooks/use-optimistic-mutations'
 
 export const Route = createFileRoute('/_authed/dashboards/$slug')({
   validateSearch: z.object({
@@ -128,16 +130,17 @@ type DashboardEditAction =
     }
 
 function createEditActionId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+  if (
+    typeof crypto !== 'undefined' &&
+    typeof crypto.randomUUID === 'function'
+  ) {
     return crypto.randomUUID()
   }
 
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
 }
 
-function cloneConfig(
-  config: Record<string, unknown>,
-): Record<string, unknown> {
+function cloneConfig(config: Record<string, unknown>): Record<string, unknown> {
   return structuredClone(config)
 }
 
@@ -182,7 +185,9 @@ function positionsEqual(
   return true
 }
 
-function buildPagePositions(page: PageWithWidgets): Array<WidgetPositionUpdate> {
+function buildPagePositions(
+  page: PageWithWidgets,
+): Array<WidgetPositionUpdate> {
   return page.widgets.map((widget) => ({
     id: widget.id,
     x: widget.x,
@@ -202,6 +207,30 @@ function configsEqual(
 function asApiResponse<T>(value: unknown): ApiResponse<T> {
   return value as ApiResponse<T>
 }
+
+type DashboardRealtimeBroadcast = Extract<
+  RealtimeServerMessage,
+  { type: 'broadcast' }
+>
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function parseRealtimeMessage(message: string): RealtimeServerMessage | null {
+  try {
+    const parsed = JSON.parse(message) as unknown
+    if (!isRecord(parsed) || typeof parsed.type !== 'string') {
+      return null
+    }
+
+    return parsed as RealtimeServerMessage
+  } catch {
+    return null
+  }
+}
+
+type WidgetMutationSnapshot = ConfigSnapshot | LayoutSnapshot
 
 function DashboardViewPage() {
   const { slug } = Route.useParams()
@@ -232,6 +261,15 @@ function DashboardViewPage() {
     new Map(),
   )
   const activePageIdRef = useRef<string | null>(null)
+  const websocketRef = useRef<WebSocket | null>(null)
+  const realtimeClientIdRef = useRef<string | null>(null)
+  const refetchDashboardRef = useRef<(() => Promise<void>) | null>(null)
+  const rollbackConfigSnapshotRef = useRef<
+    ((snapshot: ConfigSnapshot) => Promise<void>) | null
+  >(null)
+  const rollbackLayoutSnapshotRef = useRef<
+    ((snapshot: LayoutSnapshot) => Promise<void>) | null
+  >(null)
 
   const {
     canUndo,
@@ -252,6 +290,19 @@ function DashboardViewPage() {
       onExitEditMode: () => setSelectedWidgetId(null),
       enableEscapeToExit: false,
     })
+
+  const optimisticMutations = useOptimisticMutations<WidgetMutationSnapshot>({
+    onRollback: async (snapshot) => {
+      if ('config' in snapshot && rollbackConfigSnapshotRef.current) {
+        await rollbackConfigSnapshotRef.current(snapshot)
+      } else if ('positions' in snapshot && rollbackLayoutSnapshotRef.current) {
+        await rollbackLayoutSnapshotRef.current(snapshot)
+      }
+    },
+    onError: (_mutationId, err) => {
+      setError(`Mutation failed: ${err.message}`)
+    },
+  })
 
   const activePage = useMemo(
     () => pages.find((p) => p.id === activePageId) ?? null,
@@ -288,6 +339,8 @@ function DashboardViewPage() {
 
   useEffect(
     () => () => {
+      websocketRef.current?.close(1000, 'Dashboard view unmounted')
+      websocketRef.current = null
       for (const timer of configUpdateTimersRef.current.values()) {
         clearTimeout(timer)
       }
@@ -296,6 +349,354 @@ function DashboardViewPage() {
     },
     [],
   )
+
+  const applyRealtimeBroadcast = useCallback(
+    (message: DashboardRealtimeBroadcast) => {
+      if (!dashboard || message.dashboardId !== dashboard.id) {
+        return
+      }
+
+      const currentClientId = realtimeClientIdRef.current
+      if (currentClientId && message.actorId === currentClientId) {
+        return
+      }
+
+      if (message.event === 'layout:change') {
+        const payload = message.payload
+        const pageId =
+          typeof payload.pageId === 'string' ? payload.pageId : null
+        const positions = Array.isArray(payload.positions)
+          ? payload.positions
+          : null
+
+        if (!pageId || !positions) {
+          return
+        }
+
+        const positionMap = new Map<string, WidgetPositionUpdate>()
+
+        for (const candidate of positions) {
+          if (!isRecord(candidate) || typeof candidate.id !== 'string') {
+            continue
+          }
+
+          const { id, x, y, w, h } = candidate
+          if (
+            typeof x !== 'number' ||
+            typeof y !== 'number' ||
+            typeof w !== 'number' ||
+            typeof h !== 'number'
+          ) {
+            continue
+          }
+
+          positionMap.set(id, {
+            id,
+            x,
+            y,
+            w,
+            h,
+          })
+        }
+
+        if (positionMap.size === 0) {
+          return
+        }
+
+        setPages((prev) =>
+          prev.map((page) =>
+            page.id === pageId
+              ? {
+                  ...page,
+                  widgets: page.widgets.map((widget) => {
+                    const nextPosition = positionMap.get(widget.id)
+                    if (!nextPosition) {
+                      return widget
+                    }
+
+                    return {
+                      ...widget,
+                      x: nextPosition.x,
+                      y: nextPosition.y,
+                      w: nextPosition.w,
+                      h: nextPosition.h,
+                    }
+                  }),
+                }
+              : page,
+          ),
+        )
+
+        return
+      }
+
+      if (message.event !== 'widget:update') {
+        return
+      }
+
+      const payload = message.payload
+      const action = typeof payload.action === 'string' ? payload.action : null
+      const pageId = typeof payload.pageId === 'string' ? payload.pageId : null
+
+      if (!action || !pageId) {
+        return
+      }
+
+      if (action === 'deleted') {
+        const widgetId =
+          typeof payload.widgetId === 'string' ? payload.widgetId : null
+        if (!widgetId) {
+          return
+        }
+
+        setPages((prev) =>
+          prev.map((page) => {
+            if (page.id !== pageId) {
+              return page
+            }
+
+            const hasWidget = page.widgets.some(
+              (widget) => widget.id === widgetId,
+            )
+            if (!hasWidget) {
+              return page
+            }
+
+            return {
+              ...page,
+              widgetCount: Math.max(0, page.widgetCount - 1),
+              widgets: page.widgets.filter((widget) => widget.id !== widgetId),
+            }
+          }),
+        )
+
+        return
+      }
+
+      if (action === 'updated') {
+        const widgetId =
+          typeof payload.widgetId === 'string' ? payload.widgetId : null
+        const patch = isRecord(payload.patch) ? payload.patch : null
+
+        if (!widgetId || !patch) {
+          return
+        }
+
+        setPages((prev) =>
+          prev.map((page) =>
+            page.id === pageId
+              ? {
+                  ...page,
+                  widgets: page.widgets.map((widget) => {
+                    if (widget.id !== widgetId) {
+                      return widget
+                    }
+
+                    const config =
+                      'config' in patch && isRecord(patch.config)
+                        ? patch.config
+                        : widget.config
+
+                    const title =
+                      'title' in patch &&
+                      (typeof patch.title === 'string' || patch.title === null)
+                        ? patch.title
+                        : widget.title
+
+                    return {
+                      ...widget,
+                      title,
+                      config,
+                    }
+                  }),
+                }
+              : page,
+          ),
+        )
+
+        return
+      }
+
+      if (action === 'created') {
+        const nextWidget = isRecord(payload.widget) ? payload.widget : null
+        if (!nextWidget || typeof nextWidget.id !== 'string') {
+          return
+        }
+
+        if (
+          typeof nextWidget.type !== 'string' ||
+          (typeof nextWidget.title !== 'string' && nextWidget.title !== null) ||
+          !isRecord(nextWidget.config) ||
+          typeof nextWidget.x !== 'number' ||
+          typeof nextWidget.y !== 'number' ||
+          typeof nextWidget.w !== 'number' ||
+          typeof nextWidget.h !== 'number'
+        ) {
+          return
+        }
+
+        const nextWidgetData: WidgetData = {
+          id: nextWidget.id,
+          type: nextWidget.type,
+          title: nextWidget.title,
+          config: nextWidget.config,
+          x: nextWidget.x,
+          y: nextWidget.y,
+          w: nextWidget.w,
+          h: nextWidget.h,
+        }
+
+        setPages((prev) =>
+          prev.map((page) => {
+            if (page.id !== pageId) {
+              return page
+            }
+
+            const exists = page.widgets.some(
+              (widget) => widget.id === nextWidgetData.id,
+            )
+            if (exists) {
+              return page
+            }
+
+            return {
+              ...page,
+              widgetCount: page.widgetCount + 1,
+              widgets: [...page.widgets, nextWidgetData],
+            }
+          }),
+        )
+      }
+    },
+    [dashboard],
+  )
+
+  useEffect(() => {
+    if (!dashboard || typeof window === 'undefined') {
+      return
+    }
+
+    const BASE_RECONNECT_DELAY_MS = 400
+    const MAX_RECONNECT_DELAY_MS = 10_000
+
+    const scheme = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const endpoint = `${scheme}//${window.location.host}/_ws`
+
+    let isDisposed = false
+    let reconnectAttempts = 0
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+    let hasConnectedAtLeastOnce = false
+
+    const clearReconnectTimer = () => {
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer)
+        reconnectTimer = null
+      }
+    }
+
+    const scheduleReconnect = () => {
+      if (isDisposed) {
+        return
+      }
+
+      const exponentialDelay = Math.min(
+        MAX_RECONNECT_DELAY_MS,
+        BASE_RECONNECT_DELAY_MS * 2 ** reconnectAttempts,
+      )
+      const jitter = Math.floor(Math.random() * 200)
+      const delay = exponentialDelay + jitter
+
+      reconnectAttempts += 1
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null
+        connect()
+      }, delay)
+    }
+
+    const connect = () => {
+      if (isDisposed) {
+        return
+      }
+
+      const socket = new WebSocket(endpoint)
+      websocketRef.current = socket
+
+      socket.onopen = () => {
+        reconnectAttempts = 0
+      }
+
+      socket.onmessage = (event) => {
+        if (typeof event.data !== 'string') {
+          return
+        }
+
+        const parsed = parseRealtimeMessage(event.data)
+        if (!parsed) {
+          return
+        }
+
+        if (parsed.type === 'hello') {
+          const isReconnect = hasConnectedAtLeastOnce
+          hasConnectedAtLeastOnce = true
+
+          realtimeClientIdRef.current = parsed.clientId
+          socket.send(
+            JSON.stringify({
+              type: 'subscribe',
+              dashboardId: dashboard.id,
+            }),
+          )
+
+          if (isReconnect) {
+            void refetchDashboardRef.current?.()
+          }
+
+          return
+        }
+
+        if (parsed.type === 'broadcast') {
+          applyRealtimeBroadcast(parsed)
+        }
+      }
+
+      socket.onclose = () => {
+        if (websocketRef.current === socket) {
+          websocketRef.current = null
+        }
+
+        if (isDisposed) {
+          return
+        }
+
+        scheduleReconnect()
+      }
+
+      socket.onerror = () => {
+        socket.close()
+      }
+    }
+
+    connect()
+
+    return () => {
+      isDisposed = true
+      clearReconnectTimer()
+
+      const socket = websocketRef.current
+      websocketRef.current = null
+
+      if (socket?.readyState === WebSocket.OPEN) {
+        socket.send(
+          JSON.stringify({
+            type: 'unsubscribe',
+            dashboardId: dashboard.id,
+          }),
+        )
+      }
+
+      socket?.close(1000, 'Dashboard changed')
+    }
+  }, [applyRealtimeBroadcast, dashboard])
 
   const fetchDashboard = useCallback(async () => {
     setIsLoading(true)
@@ -364,6 +765,10 @@ function DashboardViewPage() {
       setIsLoading(false)
     }
   }, [slug, activePageId, requestedPageId, navigate])
+
+  useEffect(() => {
+    refetchDashboardRef.current = fetchDashboard
+  }, [fetchDashboard])
 
   useEffect(() => {
     void fetchDashboard()
@@ -528,7 +933,11 @@ function DashboardViewPage() {
   }
 
   const persistWidgetConfig = useCallback(
-    async (widgetId: string, config: Record<string, unknown>) => {
+    async (
+      widgetId: string,
+      config: Record<string, unknown>,
+      mutationId?: string,
+    ) => {
       const currentPage = pagesRef.current.find(
         (page) => page.id === activePageIdRef.current,
       )
@@ -537,6 +946,9 @@ function DashboardViewPage() {
       )
 
       if (!currentWidget) {
+        if (mutationId) {
+          optimisticMutations.failMutation(mutationId, 'Widget not found')
+        }
         return
       }
 
@@ -548,8 +960,13 @@ function DashboardViewPage() {
         })
 
         if (!validation.success) {
+          if (mutationId) {
+            optimisticMutations.failMutation(
+              mutationId,
+              'Invalid widget configuration',
+            )
+          }
           setError('Invalid widget configuration. Please review your values.')
-          void fetchDashboard()
           return
         }
       }
@@ -559,15 +976,29 @@ function DashboardViewPage() {
           data: {
             id: widgetId,
             config,
+            realtimeClientId: realtimeClientIdRef.current ?? undefined,
+            mutationTimestamp: Date.now(),
           },
         }),
       )
 
-      if (!result.success && result.error) {
-        setError(result.error.message)
+      if (!result.success) {
+        if (mutationId) {
+          optimisticMutations.failMutation(
+            mutationId,
+            result.error?.message ?? 'Failed to save',
+          )
+        } else if (result.error) {
+          setError(result.error.message)
+        }
+        return
+      }
+
+      if (mutationId) {
+        optimisticMutations.confirmMutation(mutationId)
       }
     },
-    [fetchDashboard],
+    [fetchDashboard, optimisticMutations],
   )
 
   const queueWidgetConfigPersist = useCallback(
@@ -657,6 +1088,8 @@ function DashboardViewPage() {
         await updateWidgetPositionsFn({
           data: {
             positions: clonePositions(snapshot.positions),
+            realtimeClientId: realtimeClientIdRef.current ?? undefined,
+            mutationTimestamp: Date.now(),
           },
         }),
       )
@@ -668,6 +1101,14 @@ function DashboardViewPage() {
     },
     [],
   )
+
+  useEffect(() => {
+    rollbackConfigSnapshotRef.current = applyWidgetConfigSnapshot
+  }, [applyWidgetConfigSnapshot])
+
+  useEffect(() => {
+    rollbackLayoutSnapshotRef.current = applyWidgetLayoutSnapshot
+  }, [applyWidgetLayoutSnapshot])
 
   const handleWidgetSelect = useCallback(
     (widgetId: string) => {
@@ -695,7 +1136,9 @@ function DashboardViewPage() {
         return
       }
 
-      const currentPage = pagesRef.current.find((page) => page.id === activePageId)
+      const currentPage = pagesRef.current.find(
+        (page) => page.id === activePageId,
+      )
       const currentWidget = currentPage?.widgets.find(
         (widget) => widget.id === widgetId,
       )
@@ -754,7 +1197,12 @@ function DashboardViewPage() {
         })
       }
     },
-    [activePageId, isApplyingHistory, pushHistoryAction, queueWidgetConfigPersist],
+    [
+      activePageId,
+      isApplyingHistory,
+      pushHistoryAction,
+      queueWidgetConfigPersist,
+    ],
   )
 
   const handleWidgetLayoutChange = useCallback(
@@ -763,7 +1211,9 @@ function DashboardViewPage() {
         return
       }
 
-      const currentPage = pagesRef.current.find((page) => page.id === activePageId)
+      const currentPage = pagesRef.current.find(
+        (page) => page.id === activePageId,
+      )
       if (!currentPage) {
         return
       }
@@ -776,6 +1226,11 @@ function DashboardViewPage() {
       const positionMap = new Map(
         positions.map((position) => [position.id, position]),
       )
+
+      const mutationId = optimisticMutations.startMutation('widget-layout', {
+        pageId: activePageId,
+        positions: clonePositions(beforePositions),
+      })
 
       setPages((prev) =>
         prev.map((page) =>
@@ -803,15 +1258,27 @@ function DashboardViewPage() {
 
       const result = asApiResponse<{ updated: number }>(
         await updateWidgetPositionsFn({
-          data: { positions },
+          data: {
+            positions,
+            realtimeClientId: realtimeClientIdRef.current ?? undefined,
+            mutationTimestamp: Date.now(),
+          },
         }),
       )
 
-      if (!result.success && result.error) {
-        setError(result.error.message)
-        void fetchDashboard()
+      if (!result.success) {
+        optimisticMutations.failMutation(
+          mutationId,
+          result.error?.message ?? 'Failed to update layout',
+        )
+
+        if (result.error) {
+          setError(result.error.message)
+        }
         return
       }
+
+      optimisticMutations.confirmMutation(mutationId)
 
       if (!isApplyingHistory) {
         const now = Date.now()
@@ -831,7 +1298,13 @@ function DashboardViewPage() {
         })
       }
     },
-    [activePageId, fetchDashboard, isApplyingHistory, pushHistoryAction],
+    [
+      activePageId,
+      fetchDashboard,
+      isApplyingHistory,
+      pushHistoryAction,
+      optimisticMutations,
+    ],
   )
 
   const handleAddWidget = useCallback(
@@ -865,6 +1338,7 @@ function DashboardViewPage() {
             x: 0,
             y: nextY,
             config: definition.defaultConfig,
+            realtimeClientId: realtimeClientIdRef.current ?? undefined,
           },
         }),
       )
@@ -918,7 +1392,12 @@ function DashboardViewPage() {
       }
 
       const result = asApiResponse<{ deleted: boolean }>(
-        await deleteWidgetFn({ data: { id: widgetId } }),
+        await deleteWidgetFn({
+          data: {
+            id: widgetId,
+            realtimeClientId: realtimeClientIdRef.current ?? undefined,
+          },
+        }),
       )
 
       if (!result.success) {
@@ -958,6 +1437,7 @@ function DashboardViewPage() {
             id: widgetId,
             offsetX: 1,
             offsetY: 1,
+            realtimeClientId: realtimeClientIdRef.current ?? undefined,
           },
         }),
       )
@@ -1286,6 +1766,36 @@ function DashboardViewPage() {
         </Alert>
       )}
 
+      {Array.from(optimisticMutations.pendingMutations.values())
+        .filter((m) => m.status === 'failed')
+        .map((failedMutation) => (
+          <Alert key={failedMutation.id} variant="destructive" className="mb-2">
+            <AlertDescription className="flex items-center justify-between gap-4">
+              <span>{failedMutation.error ?? 'Mutation failed'}</span>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    void optimisticMutations.rollbackMutation(failedMutation.id)
+                  }
+                >
+                  Rollback
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    optimisticMutations.clearMutation(failedMutation.id)
+                  }
+                >
+                  Dismiss
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        ))}
+
       <header className="flex items-center justify-between px-4 py-3 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
         <div className="flex items-center gap-3 min-w-0">
           <Link
@@ -1330,6 +1840,11 @@ function DashboardViewPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {optimisticMutations.hasPendingMutations && (
+            <Badge variant="outline" className="text-xs animate-pulse">
+              Saving...
+            </Badge>
+          )}
           <Button
             variant="outline"
             size="sm"

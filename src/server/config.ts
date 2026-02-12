@@ -21,14 +21,10 @@ const envSchema = z.object({
     .enum(['development', 'production', 'test'])
     .default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
-  LOG_LEVEL: z
-    .enum(['debug', 'info', 'warn', 'error'])
-    .default('info'),
+  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 
   // ─── Database ─────────────────────────────
-  DATABASE_PATH: z
-    .string()
-    .default('./data/dashy.db'),
+  DATABASE_PATH: z.string().default('./data/dashy.db'),
 
   // ─── Auth / Session ───────────────────────
   SESSION_SECRET: z
@@ -42,6 +38,13 @@ const envSchema = z.object({
 
   // ─── External APIs (optional, used by widgets) ─
   OPENWEATHER_API_KEY: z.string().optional(),
+
+  // ─── Rate Limiting ───────────────────────────
+  RATE_LIMIT_AUTH_MAX: z.coerce.number().int().min(1).default(5),
+  RATE_LIMIT_AUTH_STRICT_MAX: z.coerce.number().int().min(1).default(3),
+  RATE_LIMIT_API_MAX: z.coerce.number().int().min(1).default(100),
+  RATE_LIMIT_API_WRITE_MAX: z.coerce.number().int().min(1).default(50),
+  RATE_LIMIT_PUBLIC_MAX: z.coerce.number().int().min(1).default(60),
 })
 
 /**
@@ -99,6 +102,14 @@ export interface AppConfig {
   externalApis: {
     openWeatherApiKey?: string
   }
+  /** Rate limiting settings */
+  rateLimit: {
+    authMax: number
+    authStrictMax: number
+    apiMax: number
+    apiWriteMax: number
+    publicMax: number
+  }
 }
 
 /**
@@ -124,6 +135,13 @@ function buildConfig(env: EnvConfig): AppConfig {
     },
     externalApis: {
       openWeatherApiKey: env.OPENWEATHER_API_KEY,
+    },
+    rateLimit: {
+      authMax: env.RATE_LIMIT_AUTH_MAX,
+      authStrictMax: env.RATE_LIMIT_AUTH_STRICT_MAX,
+      apiMax: env.RATE_LIMIT_API_MAX,
+      apiWriteMax: env.RATE_LIMIT_API_WRITE_MAX,
+      publicMax: env.RATE_LIMIT_PUBLIC_MAX,
     },
   }
 }

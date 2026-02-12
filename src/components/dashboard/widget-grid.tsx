@@ -2,7 +2,8 @@
  * Widget Grid System
  *
  * Grid-based drag & drop layout using react-grid-layout v2.
- * Includes mobile fallback (stacked layout) and debounced persistence.
+ * Includes mobile fallback (stacked layout), debounced persistence,
+ * and virtualization for performance with many widgets.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { GridLayout, useContainerWidth } from 'react-grid-layout'
@@ -10,9 +11,14 @@ import type { Breakpoints, LayoutItem } from 'react-grid-layout'
 import { cn } from '@/lib/utils'
 import { GlassCard } from '@/components/ui/glass-card'
 import { useIsMobile } from '@/hooks/use-responsive'
+import {
+  useWidgetVisibility,
+  useObserveWidget,
+} from '@/hooks/use-widget-visibility'
 import 'react-grid-layout/css/styles.css'
 
 const DEBOUNCE_MS = 300
+const VIRTUALIZE_THRESHOLD = 10
 
 export interface WidgetLayout {
   i: string
@@ -49,6 +55,7 @@ interface WidgetGridProps {
   renderWidgetContent?: (widget: WidgetItem) => React.ReactNode
   selectedWidgetId?: string | null
   className?: string
+  enableVirtualization?: boolean
 }
 
 const BREAKPOINTS: Breakpoints = {
@@ -71,6 +78,8 @@ function WidgetSlot({
   widget,
   isSelected,
   isEditable,
+  isVisible = true,
+  observeRef,
   onClick,
   onConfigure,
   onDuplicate,
@@ -80,6 +89,8 @@ function WidgetSlot({
   widget: WidgetItem
   isSelected: boolean
   isEditable: boolean
+  isVisible?: boolean
+  observeRef?: (element: HTMLElement | null) => void
   onClick?: () => void
   onConfigure?: () => void
   onDuplicate?: () => void
@@ -87,75 +98,83 @@ function WidgetSlot({
   children?: React.ReactNode
 }) {
   return (
-    <GlassCard
-      variant="elevated"
-      interactive
-      padding="none"
-      className={cn(
-        'group h-full overflow-hidden relative',
-        isSelected &&
-          'ring-2 ring-primary ring-offset-2 ring-offset-background',
-        isEditable && 'cursor-move',
-      )}
-      onClick={onClick}
-    >
-      {isEditable && (
-        <div
-          className={cn(
-            'absolute right-2 top-2 z-20 flex items-center gap-1 rounded-lg border border-border/70 bg-background/85 p-1 shadow-sm backdrop-blur transition-opacity',
-            isSelected
-              ? 'opacity-100'
-              : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100',
-          )}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <span className="px-2 text-[10px] uppercase tracking-wide text-muted-foreground">
-            Drag/Resize
-          </span>
-          <button
-            type="button"
-            className="rounded px-2 py-1 text-xs hover:bg-muted transition-colors"
-            onClick={onConfigure}
-            aria-label="Configure widget"
+    <div ref={observeRef as React.Ref<HTMLDivElement>} className="h-full">
+      <GlassCard
+        variant="elevated"
+        interactive
+        padding="none"
+        className={cn(
+          'group h-full overflow-hidden relative',
+          isSelected &&
+            'ring-2 ring-primary ring-offset-2 ring-offset-background',
+          isEditable && 'cursor-move',
+        )}
+        onClick={onClick}
+      >
+        {isEditable && (
+          <div
+            className={cn(
+              'absolute right-2 top-2 z-20 flex items-center gap-1 rounded-lg border border-border/70 bg-background/85 p-1 shadow-sm backdrop-blur transition-opacity',
+              isSelected
+                ? 'opacity-100'
+                : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100',
+            )}
+            onClick={(e) => e.stopPropagation()}
           >
-            Configure
-          </button>
-          <button
-            type="button"
-            className="rounded px-2 py-1 text-xs hover:bg-muted transition-colors"
-            onClick={onDuplicate}
-            aria-label="Duplicate widget"
-          >
-            Duplicate
-          </button>
-          <button
-            type="button"
-            className="rounded px-2 py-1 text-xs text-destructive hover:bg-destructive/10 transition-colors"
-            onClick={onDelete}
-            aria-label="Delete widget"
-          >
-            Delete
-          </button>
-        </div>
-      )}
-      <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
-          <span className="text-sm font-medium truncate">
-            {widget.title ?? widget.type}
-          </span>
-          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-            {widget.type}
-          </span>
-        </div>
-        <div className="flex-1 p-3 overflow-auto">
-          {children ?? (
-            <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+            <span className="px-2 text-[10px] uppercase tracking-wide text-muted-foreground">
+              Drag/Resize
+            </span>
+            <button
+              type="button"
+              className="rounded px-2 py-1 text-xs hover:bg-muted transition-colors"
+              onClick={onConfigure}
+              aria-label="Configure widget"
+            >
+              Configure
+            </button>
+            <button
+              type="button"
+              className="rounded px-2 py-1 text-xs hover:bg-muted transition-colors"
+              onClick={onDuplicate}
+              aria-label="Duplicate widget"
+            >
+              Duplicate
+            </button>
+            <button
+              type="button"
+              className="rounded px-2 py-1 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+              onClick={onDelete}
+              aria-label="Delete widget"
+            >
+              Delete
+            </button>
+          </div>
+        )}
+        <div className="flex flex-col h-full">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
+            <span className="text-sm font-medium truncate">
+              {widget.title ?? widget.type}
+            </span>
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
               {widget.type}
-            </div>
-          )}
+            </span>
+          </div>
+          <div className="flex-1 p-3 overflow-auto">
+            {isVisible ? (
+              (children ?? (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  {widget.type}
+                </div>
+              ))
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground/50 text-xs">
+                Loading...
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </GlassCard>
+      </GlassCard>
+    </div>
   )
 }
 
@@ -203,6 +222,7 @@ export function WidgetGrid({
   renderWidgetContent,
   selectedWidgetId,
   className,
+  enableVirtualization = true,
 }: WidgetGridProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const { width } = useContainerWidth()
@@ -210,6 +230,16 @@ export function WidgetGrid({
   const isMobile = useIsMobile()
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingLayoutRef = useRef<Array<WidgetLayout> | null>(null)
+
+  const shouldVirtualize =
+    enableVirtualization && widgets.length > VIRTUALIZE_THRESHOLD && !isMobile
+
+  const widgetIds = widgets.map((w) => w.id)
+  const { visibilityMap, observerRef } = useWidgetVisibility(widgetIds, {
+    rootMargin: '200px',
+    threshold: 0.01,
+    debounceMs: 50,
+  })
 
   useEffect(() => {
     const initialLayout: ReadonlyArray<LayoutItem> = widgets.map((w) =>
@@ -299,21 +329,32 @@ export function WidgetGrid({
         }}
         onLayoutChange={handleLayoutChange}
       >
-        {widgets.map((widget) => (
-          <div key={widget.id}>
-            <WidgetSlot
-              widget={widget}
-              isSelected={selectedWidgetId === widget.id}
-              isEditable={isEditable}
-              onClick={() => onWidgetSelect?.(widget.id)}
-              onConfigure={() => onWidgetConfigure?.(widget.id)}
-              onDuplicate={() => onWidgetDuplicate?.(widget.id)}
-              onDelete={() => onWidgetDelete?.(widget.id)}
-            >
-              {renderWidgetContent?.(widget)}
-            </WidgetSlot>
-          </div>
-        ))}
+        {widgets.map((widget) => {
+          const isVisible = shouldVirtualize
+            ? (visibilityMap[widget.id] ?? false)
+            : true
+          const observeRef = shouldVirtualize
+            ? useObserveWidget(widget.id, observerRef.current)
+            : undefined
+
+          return (
+            <div key={widget.id}>
+              <WidgetSlot
+                widget={widget}
+                isSelected={selectedWidgetId === widget.id}
+                isEditable={isEditable}
+                isVisible={isVisible}
+                observeRef={observeRef}
+                onClick={() => onWidgetSelect?.(widget.id)}
+                onConfigure={() => onWidgetConfigure?.(widget.id)}
+                onDuplicate={() => onWidgetDuplicate?.(widget.id)}
+                onDelete={() => onWidgetDelete?.(widget.id)}
+              >
+                {renderWidgetContent?.(widget)}
+              </WidgetSlot>
+            </div>
+          )
+        })}
       </GridLayout>
     </div>
   )

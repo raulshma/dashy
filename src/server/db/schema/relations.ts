@@ -5,35 +5,34 @@
  * These don't create database constraints — they enable Drizzle's
  * `with` clause for eager loading related data.
  */
-import { relations } from 'drizzle-orm';
-import { users } from './users';
-import { dashboards } from './dashboards';
-import { pages } from './pages';
-import { widgets } from './widgets';
-import { widgetConfigs } from './widget-configs';
-import { templates } from './templates';
-import { shareLinks } from './share-links';
-import { dashboardVersions } from './dashboard-versions';
+import { relations } from 'drizzle-orm'
+import { users } from './users'
+import { dashboards } from './dashboards'
+import { pages } from './pages'
+import { widgets } from './widgets'
+import { widgetConfigs } from './widget-configs'
+import { templates } from './templates'
+import { shareLinks } from './share-links'
+import { dashboardVersions } from './dashboard-versions'
+import { plugins, pluginStorage } from './plugins'
 
 // ── User Relations ─────────────────────────────
 export const usersRelations = relations(users, ({ many }) => ({
   dashboards: many(dashboards),
   templates: many(templates),
-}));
+  installedPlugins: many(plugins),
+}))
 
 // ── Dashboard Relations ────────────────────────
-export const dashboardsRelations = relations(
-  dashboards,
-  ({ one, many }) => ({
-    owner: one(users, {
-      fields: [dashboards.userId],
-      references: [users.id],
-    }),
-    pages: many(pages),
-    shareLinks: many(shareLinks),
-    versions: many(dashboardVersions),
+export const dashboardsRelations = relations(dashboards, ({ one, many }) => ({
+  owner: one(users, {
+    fields: [dashboards.userId],
+    references: [users.id],
   }),
-);
+  pages: many(pages),
+  shareLinks: many(shareLinks),
+  versions: many(dashboardVersions),
+}))
 
 // ── Page Relations ─────────────────────────────
 export const pagesRelations = relations(pages, ({ one, many }) => ({
@@ -42,7 +41,7 @@ export const pagesRelations = relations(pages, ({ one, many }) => ({
     references: [dashboards.id],
   }),
   widgets: many(widgets),
-}));
+}))
 
 // ── Widget Relations ───────────────────────────
 export const widgetsRelations = relations(widgets, ({ one, many }) => ({
@@ -51,18 +50,15 @@ export const widgetsRelations = relations(widgets, ({ one, many }) => ({
     references: [pages.id],
   }),
   configs: many(widgetConfigs),
-}));
+}))
 
 // ── Widget Config Relations ────────────────────
-export const widgetConfigsRelations = relations(
-  widgetConfigs,
-  ({ one }) => ({
-    widget: one(widgets, {
-      fields: [widgetConfigs.widgetId],
-      references: [widgets.id],
-    }),
+export const widgetConfigsRelations = relations(widgetConfigs, ({ one }) => ({
+  widget: one(widgets, {
+    fields: [widgetConfigs.widgetId],
+    references: [widgets.id],
   }),
-);
+}))
 
 // ── Template Relations ─────────────────────────
 export const templatesRelations = relations(templates, ({ one }) => ({
@@ -70,7 +66,7 @@ export const templatesRelations = relations(templates, ({ one }) => ({
     fields: [templates.createdBy],
     references: [users.id],
   }),
-}));
+}))
 
 // ── Share Link Relations ───────────────────────
 export const shareLinksRelations = relations(shareLinks, ({ one }) => ({
@@ -78,7 +74,7 @@ export const shareLinksRelations = relations(shareLinks, ({ one }) => ({
     fields: [shareLinks.dashboardId],
     references: [dashboards.id],
   }),
-}));
+}))
 
 // ── Dashboard Version Relations ────────────────
 export const dashboardVersionsRelations = relations(
@@ -89,4 +85,21 @@ export const dashboardVersionsRelations = relations(
       references: [dashboards.id],
     }),
   }),
-);
+)
+
+// ── Plugin Relations ───────────────────────────
+export const pluginsRelations = relations(plugins, ({ one, many }) => ({
+  installer: one(users, {
+    fields: [plugins.installedBy],
+    references: [users.id],
+  }),
+  storage: many(pluginStorage),
+}))
+
+// ── Plugin Storage Relations ───────────────────
+export const pluginStorageRelations = relations(pluginStorage, ({ one }) => ({
+  plugin: one(plugins, {
+    fields: [pluginStorage.pluginId],
+    references: [plugins.id],
+  }),
+}))

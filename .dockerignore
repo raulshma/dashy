@@ -1,0 +1,55 @@
+# Dependencies
+node_modules
+bun.lock
+
+# Build output
+.output
+dist
+
+# Development files
+.git
+.gitignore
+.github
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Database (should be mounted as volume)
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/backups
+
+# Logs
+logs
+*.log
+
+# Test files
+coverage
+.nyc_output
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# Documentation
+docs
+*.md
+!README.md
+
+# Misc
+*.tgz
+.eslintcache

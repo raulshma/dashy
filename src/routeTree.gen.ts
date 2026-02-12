@@ -12,8 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ShareTokenRouteImport } from './routes/share.$token'
+import { Route as EmbedTokenRouteImport } from './routes/embed.$token'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as AuthedTemplatesRouteImport } from './routes/_authed/templates'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as AuthedDashboardsRouteImport } from './routes/_authed/dashboards'
 import { Route as AuthedDashboardsSlugRouteImport } from './routes/_authed/dashboards.$slug'
@@ -34,6 +37,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShareTokenRoute = ShareTokenRouteImport.update({
+  id: '/share/$token',
+  path: '/share/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmbedTokenRoute = EmbedTokenRouteImport.update({
+  id: '/embed/$token',
+  path: '/embed/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRegisterRoute = AuthRegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -43,6 +56,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => AuthRoute,
+} as any)
+const AuthedTemplatesRoute = AuthedTemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
+  getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
   id: '/settings',
@@ -77,8 +95,11 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRouteWithChildren
   '/dashboards': typeof AuthedDashboardsRouteWithChildren
   '/settings': typeof AuthedSettingsRoute
+  '/templates': typeof AuthedTemplatesRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/embed/$token': typeof EmbedTokenRoute
+  '/share/$token': typeof ShareTokenRoute
   '/dashboards/$slug': typeof AuthedDashboardsSlugRouteWithChildren
   '/dashboards/$slug/settings': typeof AuthedDashboardsSlugSettingsRoute
   '/dashboards/$slug/yaml': typeof AuthedDashboardsSlugYamlRoute
@@ -88,8 +109,11 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRouteWithChildren
   '/dashboards': typeof AuthedDashboardsRouteWithChildren
   '/settings': typeof AuthedSettingsRoute
+  '/templates': typeof AuthedTemplatesRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/embed/$token': typeof EmbedTokenRoute
+  '/share/$token': typeof ShareTokenRoute
   '/dashboards/$slug': typeof AuthedDashboardsSlugRouteWithChildren
   '/dashboards/$slug/settings': typeof AuthedDashboardsSlugSettingsRoute
   '/dashboards/$slug/yaml': typeof AuthedDashboardsSlugYamlRoute
@@ -101,8 +125,11 @@ export interface FileRoutesById {
   '/auth': typeof AuthRouteWithChildren
   '/_authed/dashboards': typeof AuthedDashboardsRouteWithChildren
   '/_authed/settings': typeof AuthedSettingsRoute
+  '/_authed/templates': typeof AuthedTemplatesRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/embed/$token': typeof EmbedTokenRoute
+  '/share/$token': typeof ShareTokenRoute
   '/_authed/dashboards/$slug': typeof AuthedDashboardsSlugRouteWithChildren
   '/_authed/dashboards/$slug/settings': typeof AuthedDashboardsSlugSettingsRoute
   '/_authed/dashboards/$slug/yaml': typeof AuthedDashboardsSlugYamlRoute
@@ -114,8 +141,11 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboards'
     | '/settings'
+    | '/templates'
     | '/auth/login'
     | '/auth/register'
+    | '/embed/$token'
+    | '/share/$token'
     | '/dashboards/$slug'
     | '/dashboards/$slug/settings'
     | '/dashboards/$slug/yaml'
@@ -125,8 +155,11 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboards'
     | '/settings'
+    | '/templates'
     | '/auth/login'
     | '/auth/register'
+    | '/embed/$token'
+    | '/share/$token'
     | '/dashboards/$slug'
     | '/dashboards/$slug/settings'
     | '/dashboards/$slug/yaml'
@@ -137,8 +170,11 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authed/dashboards'
     | '/_authed/settings'
+    | '/_authed/templates'
     | '/auth/login'
     | '/auth/register'
+    | '/embed/$token'
+    | '/share/$token'
     | '/_authed/dashboards/$slug'
     | '/_authed/dashboards/$slug/settings'
     | '/_authed/dashboards/$slug/yaml'
@@ -148,6 +184,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
+  EmbedTokenRoute: typeof EmbedTokenRoute
+  ShareTokenRoute: typeof ShareTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -173,6 +211,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/share/$token': {
+      id: '/share/$token'
+      path: '/share/$token'
+      fullPath: '/share/$token'
+      preLoaderRoute: typeof ShareTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/embed/$token': {
+      id: '/embed/$token'
+      path: '/embed/$token'
+      fullPath: '/embed/$token'
+      preLoaderRoute: typeof EmbedTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/register': {
       id: '/auth/register'
       path: '/register'
@@ -186,6 +238,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/login'
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRoute
+    }
+    '/_authed/templates': {
+      id: '/_authed/templates'
+      path: '/templates'
+      fullPath: '/templates'
+      preLoaderRoute: typeof AuthedTemplatesRouteImport
+      parentRoute: typeof AuthedRoute
     }
     '/_authed/settings': {
       id: '/_authed/settings'
@@ -252,11 +311,13 @@ const AuthedDashboardsRouteWithChildren =
 interface AuthedRouteChildren {
   AuthedDashboardsRoute: typeof AuthedDashboardsRouteWithChildren
   AuthedSettingsRoute: typeof AuthedSettingsRoute
+  AuthedTemplatesRoute: typeof AuthedTemplatesRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedDashboardsRoute: AuthedDashboardsRouteWithChildren,
   AuthedSettingsRoute: AuthedSettingsRoute,
+  AuthedTemplatesRoute: AuthedTemplatesRoute,
 }
 
 const AuthedRouteWithChildren =
@@ -278,6 +339,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
+  EmbedTokenRoute: EmbedTokenRoute,
+  ShareTokenRoute: ShareTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
