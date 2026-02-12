@@ -1,6 +1,7 @@
 import {
   createRootRoute,
   HeadContent,
+  Link,
   Outlet,
   Scripts,
 } from '@tanstack/react-router'
@@ -58,6 +59,15 @@ export const Route = createRootRoute({
   shellComponent: RootDocument,
   errorComponent: ({ error, reset }) => (
     <GlobalErrorBoundary error={error} reset={reset} />
+  ),
+  notFoundComponent: () => (
+    <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4">
+      <h1 className="text-4xl font-bold">404</h1>
+      <p className="text-muted-foreground">Page not found</p>
+      <Link to="/" className="text-primary underline">
+        Go home
+      </Link>
+    </div>
   ),
 })
 
