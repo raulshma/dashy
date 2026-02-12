@@ -11,6 +11,12 @@ export type {
   WidgetLifecycle,
   WidgetCapability,
   WidgetRegistryEntry,
+  PermissionStatus,
+  WidgetPermissionRequest,
+  WidgetPermissionResult,
+  WidgetPermissions,
+  PermissionChecker,
+  PermissionRequester,
 } from './widget'
 
 export type {

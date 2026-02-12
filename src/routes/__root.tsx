@@ -1,6 +1,17 @@
-import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
+import {
+  createRootRoute,
+  HeadContent,
+  Outlet,
+  Scripts,
+} from '@tanstack/react-router'
+import { useEffect } from 'react'
 import appCss from '../styles.css?url'
 import { AuthProvider } from '@/hooks/use-auth'
+import { Toaster } from '@/components/ui/sonner'
+import { SkipToContent } from '@/components/ui/accessibility'
+import { registerBuiltinWidgets } from '@/app/widgets'
+
+let widgetsRegistered = false
 
 export const Route = createRootRoute({
   head: () => ({
@@ -46,6 +57,13 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
+  useEffect(() => {
+    if (!widgetsRegistered) {
+      registerBuiltinWidgets()
+      widgetsRegistered = true
+    }
+  }, [])
+
   return (
     <AuthProvider>
       <Outlet />
@@ -60,7 +78,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
+        <SkipToContent />
         {children}
+        <Toaster />
         <Scripts />
       </body>
     </html>

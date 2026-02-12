@@ -2,13 +2,17 @@
  * Widget Grid System
  *
  * Grid-based drag & drop layout using react-grid-layout v2.
+ * Includes mobile fallback (stacked layout) and debounced persistence.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { GridLayout, useContainerWidth } from 'react-grid-layout'
 import type { Breakpoints, LayoutItem } from 'react-grid-layout'
 import { cn } from '@/lib/utils'
 import { GlassCard } from '@/components/ui/glass-card'
+import { useIsMobile } from '@/hooks/use-responsive'
 import 'react-grid-layout/css/styles.css'
+
+const DEBOUNCE_MS = 300
 
 export interface WidgetLayout {
   i: string
@@ -169,6 +173,9 @@ export function WidgetGrid({
   const containerRef = useRef<HTMLDivElement>(null)
   const { width } = useContainerWidth()
   const [layout, setLayout] = useState<ReadonlyArray<LayoutItem>>([])
+  const isMobile = useIsMobile()
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingLayoutRef = useRef<Array<WidgetLayout> | null>(null)
 
   useEffect(() => {
     const initialLayout: ReadonlyArray<LayoutItem> = widgets.map((w) =>
@@ -177,14 +184,59 @@ export function WidgetGrid({
     setLayout(initialLayout)
   }, [widgets])
 
+  const debouncedOnLayoutChange = useCallback(
+    (widgetLayouts: Array<WidgetLayout>) => {
+      pendingLayoutRef.current = widgetLayouts
+
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+
+      debounceRef.current = setTimeout(() => {
+        if (pendingLayoutRef.current) {
+          onLayoutChange?.(pendingLayoutRef.current)
+          pendingLayoutRef.current = null
+        }
+      }, DEBOUNCE_MS)
+    },
+    [onLayoutChange],
+  )
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+    }
+  }, [])
+
   const handleLayoutChange = useCallback(
     (currentLayout: ReadonlyArray<LayoutItem>) => {
       setLayout(currentLayout)
       const widgetLayouts = currentLayout.map(layoutItemToWidgetLayout)
-      onLayoutChange?.(widgetLayouts)
+      debouncedOnLayoutChange(widgetLayouts)
     },
-    [onLayoutChange],
+    [debouncedOnLayoutChange],
   )
+
+  if (isMobile) {
+    return (
+      <div
+        ref={containerRef}
+        className={cn('w-full flex flex-col gap-4', className)}
+      >
+        {widgets.map((widget) => (
+          <WidgetSlot
+            key={widget.id}
+            widget={widget}
+            isSelected={selectedWidgetId === widget.id}
+            isEditable={false}
+            onClick={() => onWidgetSelect?.(widget.id)}
+          />
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div

@@ -97,8 +97,12 @@ function seed() {
         w: 4,
         h: 3,
         config: {
-          location: 'San Francisco, CA',
+          locationMode: 'city',
+          city: 'San Francisco, CA',
           units: 'imperial',
+          forecastDays: 5,
+          showForecast: true,
+          refreshInterval: 600000,
         },
       },
       {
