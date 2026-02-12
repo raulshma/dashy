@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { z } from 'zod'
 import { format } from 'date-fns'
-import type { WidgetDefinition, WidgetRenderProps } from '@shared/contracts'
+import type { Widget, WidgetRenderProps } from '@shared/contracts'
 import { GlassCard } from '@/components/ui/glass-card'
 import { Icon } from '@/components/ui/icon'
 import { Loading03Icon, SettingsError02Icon } from '@hugeicons/core-free-icons'
@@ -249,7 +249,7 @@ export function WeatherWidget({
   )
 }
 
-export const weatherWidgetDefinition: WidgetDefinition<WeatherWidgetConfig> = {
+export const weatherWidgetDefinition: Widget<typeof weatherWidgetConfigSchema> = {
   type: 'weather',
   displayName: 'Weather',
   description: 'Current conditions and short forecast for a city or coordinates',

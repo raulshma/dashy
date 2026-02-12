@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { getDashboardFn, listDashboardsFn } from '@server/api/dashboards'
 import type { DashboardSummary } from '@server/api/dashboards'
-import { addWidgetFn, deleteWidgetFn, updateWidgetConfigFn } from '@server/api/widgets'
+import {
+  addWidgetFn,
+  deleteWidgetFn,
+  duplicateWidgetFn,
+  updateWidgetConfigFn,
+} from '@server/api/widgets'
 import { getAllWidgets, getWidget } from '@/app/widgets'
 import { useAuth } from '@/hooks/use-auth'
 import {
@@ -323,6 +328,21 @@ export function GlobalCommandPalette(): React.ReactElement {
     [refreshPaletteData],
   )
 
+  const handleDuplicateWidget = useCallback(
+    async (widgetId: string) => {
+      await duplicateWidgetFn({
+        data: {
+          id: widgetId,
+          offsetX: 1,
+          offsetY: 1,
+        },
+      })
+      await refreshPaletteData()
+      setOpen(false)
+    },
+    [refreshPaletteData],
+  )
+
   const handleResetWidgetConfig = useCallback(
     async (widgetId: string, widgetType: string) => {
       const widgetEntry = getWidget(widgetType)
@@ -500,6 +520,17 @@ export function GlobalCommandPalette(): React.ReactElement {
                               value={`remove widget ${widget.widgetTitle ?? widget.widgetType} ${widget.id}`}
                             >
                               Remove widget: {widget.widgetTitle ?? widget.widgetType}
+                            </CommandItem>
+                          ))}
+
+                          {currentPageWidgets.map((widget) => (
+                            <CommandItem
+                              key={`duplicate-widget-${widget.id}`}
+                              onSelect={() => void handleDuplicateWidget(widget.id)}
+                              value={`duplicate widget ${widget.widgetTitle ?? widget.widgetType} ${widget.id}`}
+                            >
+                              Duplicate widget:{' '}
+                              {widget.widgetTitle ?? widget.widgetType}
                             </CommandItem>
                           ))}
 

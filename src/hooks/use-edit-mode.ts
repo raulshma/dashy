@@ -4,10 +4,16 @@ interface UseEditModeOptions {
   initialMode?: boolean
   onEnterEditMode?: () => void
   onExitEditMode?: () => void
+  enableEscapeToExit?: boolean
 }
 
 function useEditMode(options: UseEditModeOptions = {}) {
-  const { initialMode = false, onEnterEditMode, onExitEditMode } = options
+  const {
+    initialMode = false,
+    onEnterEditMode,
+    onExitEditMode,
+    enableEscapeToExit = true,
+  } = options
   const [isEditMode, setIsEditMode] = React.useState(initialMode)
   const hasUnsavedChangesRef = React.useRef(false)
 
@@ -49,6 +55,10 @@ function useEditMode(options: UseEditModeOptions = {}) {
   }, [confirmExit, exitEditMode])
 
   React.useEffect(() => {
+    if (!enableEscapeToExit) {
+      return
+    }
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isEditMode) {
         safeExitEditMode()
@@ -57,7 +67,7 @@ function useEditMode(options: UseEditModeOptions = {}) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isEditMode, safeExitEditMode])
+  }, [enableEscapeToExit, isEditMode, safeExitEditMode])
 
   React.useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {

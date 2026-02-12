@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { z } from 'zod'
-import type { WidgetDefinition, WidgetRenderProps } from '@shared/contracts'
+import type { Widget, WidgetRenderProps } from '@shared/contracts'
 import { GlassCard } from '@/components/ui/glass-card'
 import { Icon } from '@/components/ui/icon'
 import {
@@ -203,7 +203,7 @@ export function RssWidget({ config }: WidgetRenderProps<RssWidgetConfig>) {
   )
 }
 
-export const rssWidgetDefinition: WidgetDefinition<RssWidgetConfig> = {
+export const rssWidgetDefinition: Widget<typeof rssWidgetConfigSchema> = {
   type: 'rss',
   displayName: 'RSS Feed',
   description: 'Display items from an RSS or Atom feed',

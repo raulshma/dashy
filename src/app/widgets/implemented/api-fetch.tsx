@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { z } from 'zod'
-import type { WidgetDefinition, WidgetRenderProps } from '@shared/contracts'
+import type { Widget, WidgetRenderProps } from '@shared/contracts'
 import { GlassCard } from '@/components/ui/glass-card'
 import { Icon } from '@/components/ui/icon'
 import {
@@ -244,7 +244,7 @@ export function ApiFetchWidget({
   )
 }
 
-export const apiFetchWidgetDefinition: WidgetDefinition<ApiFetchWidgetConfig> = {
+export const apiFetchWidgetDefinition: Widget<typeof apiFetchWidgetConfigSchema> = {
   type: 'api-fetch',
   displayName: 'API Fetch',
   description: 'Fetch an HTTP API endpoint and inspect JSON/text responses',

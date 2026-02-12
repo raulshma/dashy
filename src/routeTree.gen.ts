@@ -17,6 +17,7 @@ import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as AuthedDashboardsRouteImport } from './routes/_authed/dashboards'
 import { Route as AuthedDashboardsSlugRouteImport } from './routes/_authed/dashboards.$slug'
+import { Route as AuthedDashboardsSlugYamlRouteImport } from './routes/_authed/dashboards.$slug.yaml'
 import { Route as AuthedDashboardsSlugSettingsRouteImport } from './routes/_authed/dashboards.$slug.settings'
 
 const AuthRoute = AuthRouteImport.update({
@@ -58,6 +59,12 @@ const AuthedDashboardsSlugRoute = AuthedDashboardsSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => AuthedDashboardsRoute,
 } as any)
+const AuthedDashboardsSlugYamlRoute =
+  AuthedDashboardsSlugYamlRouteImport.update({
+    id: '/yaml',
+    path: '/yaml',
+    getParentRoute: () => AuthedDashboardsSlugRoute,
+  } as any)
 const AuthedDashboardsSlugSettingsRoute =
   AuthedDashboardsSlugSettingsRouteImport.update({
     id: '/settings',
@@ -74,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/auth/register': typeof AuthRegisterRoute
   '/dashboards/$slug': typeof AuthedDashboardsSlugRouteWithChildren
   '/dashboards/$slug/settings': typeof AuthedDashboardsSlugSettingsRoute
+  '/dashboards/$slug/yaml': typeof AuthedDashboardsSlugYamlRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -84,6 +92,7 @@ export interface FileRoutesByTo {
   '/auth/register': typeof AuthRegisterRoute
   '/dashboards/$slug': typeof AuthedDashboardsSlugRouteWithChildren
   '/dashboards/$slug/settings': typeof AuthedDashboardsSlugSettingsRoute
+  '/dashboards/$slug/yaml': typeof AuthedDashboardsSlugYamlRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -96,6 +105,7 @@ export interface FileRoutesById {
   '/auth/register': typeof AuthRegisterRoute
   '/_authed/dashboards/$slug': typeof AuthedDashboardsSlugRouteWithChildren
   '/_authed/dashboards/$slug/settings': typeof AuthedDashboardsSlugSettingsRoute
+  '/_authed/dashboards/$slug/yaml': typeof AuthedDashboardsSlugYamlRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/dashboards/$slug'
     | '/dashboards/$slug/settings'
+    | '/dashboards/$slug/yaml'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/dashboards/$slug'
     | '/dashboards/$slug/settings'
+    | '/dashboards/$slug/yaml'
   id:
     | '__root__'
     | '/'
@@ -129,6 +141,7 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/_authed/dashboards/$slug'
     | '/_authed/dashboards/$slug/settings'
+    | '/_authed/dashboards/$slug/yaml'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -195,6 +208,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedDashboardsSlugRouteImport
       parentRoute: typeof AuthedDashboardsRoute
     }
+    '/_authed/dashboards/$slug/yaml': {
+      id: '/_authed/dashboards/$slug/yaml'
+      path: '/yaml'
+      fullPath: '/dashboards/$slug/yaml'
+      preLoaderRoute: typeof AuthedDashboardsSlugYamlRouteImport
+      parentRoute: typeof AuthedDashboardsSlugRoute
+    }
     '/_authed/dashboards/$slug/settings': {
       id: '/_authed/dashboards/$slug/settings'
       path: '/settings'
@@ -207,10 +227,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthedDashboardsSlugRouteChildren {
   AuthedDashboardsSlugSettingsRoute: typeof AuthedDashboardsSlugSettingsRoute
+  AuthedDashboardsSlugYamlRoute: typeof AuthedDashboardsSlugYamlRoute
 }
 
 const AuthedDashboardsSlugRouteChildren: AuthedDashboardsSlugRouteChildren = {
   AuthedDashboardsSlugSettingsRoute: AuthedDashboardsSlugSettingsRoute,
+  AuthedDashboardsSlugYamlRoute: AuthedDashboardsSlugYamlRoute,
 }
 
 const AuthedDashboardsSlugRouteWithChildren =

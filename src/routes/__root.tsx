@@ -10,6 +10,7 @@ import { AuthProvider } from '@/hooks/use-auth'
 import { Toaster } from '@/components/ui/sonner'
 import { SkipToContent } from '@/components/ui/accessibility'
 import { GlobalCommandPalette } from '@/components/app/global-command-palette'
+import { GlobalErrorBoundary } from '@/components/app/global-error-boundary'
 import { registerBuiltinWidgets } from '@/app/widgets'
 
 let widgetsRegistered = false
@@ -55,6 +56,9 @@ export const Route = createRootRoute({
 
   component: RootComponent,
   shellComponent: RootDocument,
+  errorComponent: ({ error, reset }) => (
+    <GlobalErrorBoundary error={error} reset={reset} />
+  ),
 })
 
 function RootComponent() {

@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { z } from 'zod'
-import type { WidgetDefinition, WidgetRenderProps } from '@shared/contracts'
+import type { Widget, WidgetRenderProps } from '@shared/contracts'
 import { GlassCard } from '@/components/ui/glass-card'
 import { Icon } from '@/components/ui/icon'
 import {
@@ -8,7 +8,17 @@ import {
   Add01Icon,
   Search01Icon,
   Folder01Icon,
+  Upload04Icon,
+  Delete02Icon,
 } from '@hugeicons/core-free-icons'
+
+const MAX_ICON_FILE_BYTES = 128 * 1024
+const ALLOWED_ICON_MIME_TYPES = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
+])
 
 export const bookmarkSchema = z.object({
   id: z.string(),
@@ -47,38 +57,93 @@ function getFaviconUrl(url: string): string {
 
 function BookmarkItem({
   bookmark,
+  isEditing,
   onClick,
+  onRequestUpload,
+  onClearIcon,
 }: {
   bookmark: Bookmark
+  isEditing: boolean
   onClick: () => void
+  onRequestUpload: () => void
+  onClearIcon: () => void
 }) {
   const iconSrc = bookmark.icon || getFaviconUrl(bookmark.url)
 
   return (
-    <button
-      onClick={onClick}
-      className="group flex flex-col items-center gap-1.5 p-2 rounded-lg hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
-      title={bookmark.name}
-    >
-      <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center overflow-hidden group-hover:bg-white/20 transition-colors">
-        {iconSrc ? (
-          <img
-            src={iconSrc}
-            alt={bookmark.name}
-            className="w-6 h-6 object-contain"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none'
-            }}
-          />
-        ) : (
-          <Icon icon={Link02Icon} size="md" className="text-muted-foreground" />
-        )}
-      </div>
-      <span className="text-xs text-muted-foreground group-hover:text-foreground truncate max-w-full text-center">
-        {bookmark.name}
-      </span>
-    </button>
+    <div className="group flex flex-col items-center gap-1.5 p-2 rounded-lg hover:bg-white/5 transition-colors">
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full flex flex-col items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-lg"
+        title={bookmark.name}
+      >
+        <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center overflow-hidden group-hover:bg-white/20 transition-colors">
+          {iconSrc ? (
+            <img
+              src={iconSrc}
+              alt={bookmark.name}
+              className="w-6 h-6 object-contain"
+              loading="lazy"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none'
+              }}
+            />
+          ) : (
+            <Icon
+              icon={Link02Icon}
+              size="md"
+              className="text-muted-foreground"
+            />
+          )}
+        </div>
+        <span className="text-xs text-muted-foreground group-hover:text-foreground truncate max-w-full text-center">
+          {bookmark.name}
+        </span>
+      </button>
+
+      {isEditing && (
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onRequestUpload}
+            className="p-1 rounded-md bg-white/10 hover:bg-white/20 transition-colors"
+            title="Upload custom icon"
+            aria-label={`Upload icon for ${bookmark.name}`}
+          >
+            <Icon icon={Upload04Icon} size="xs" />
+          </button>
+          {bookmark.icon && (
+            <button
+              type="button"
+              onClick={onClearIcon}
+              className="p-1 rounded-md bg-white/10 hover:bg-white/20 transition-colors"
+              title="Remove custom icon"
+              aria-label={`Remove icon for ${bookmark.name}`}
+            >
+              <Icon icon={Delete02Icon} size="xs" />
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   )
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = reader.result
+      if (typeof result === 'string') {
+        resolve(result)
+      } else {
+        reject(new Error('Failed to read image file'))
+      }
+    }
+    reader.onerror = () => reject(new Error('Failed to read image file'))
+    reader.readAsDataURL(file)
+  })
 }
 
 function GroupHeader({
@@ -113,12 +178,17 @@ function GroupHeader({
 export function AppLauncherWidget({
   config,
   isEditing,
+  onConfigChange,
 }: WidgetRenderProps<AppLauncherWidgetConfig>) {
   const [search, setSearch] = useState('')
+  const [uploadMessage, setUploadMessage] = useState<string | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [pendingBookmarkId, setPendingBookmarkId] = useState<string | null>(null)
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
     () => new Set(config.groups.filter((g) => g.collapsed).map((g) => g.id)),
   )
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const iconInputRef = useRef<HTMLInputElement>(null)
 
   const filteredBookmarks = useMemo(() => {
     if (!search.trim()) return config.bookmarks
@@ -145,6 +215,52 @@ export function AppLauncherWidget({
 
   const handleOpenBookmark = (bookmark: Bookmark) => {
     window.open(bookmark.url, '_blank', 'noopener,noreferrer')
+  }
+
+  const handleIconUploadForBookmark = async (file: File, bookmarkId: string) => {
+    setUploadMessage(null)
+    setUploadError(null)
+
+    if (!ALLOWED_ICON_MIME_TYPES.has(file.type)) {
+      setUploadError('Only PNG, JPG, WEBP, and GIF icons are allowed.')
+      return
+    }
+
+    if (file.size > MAX_ICON_FILE_BYTES) {
+      setUploadError('Icon must be 128KB or smaller for performance.')
+      return
+    }
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file)
+      if (!dataUrl.startsWith('data:image/')) {
+        setUploadError('Invalid icon content.')
+        return
+      }
+
+      onConfigChange?.({
+        bookmarks: config.bookmarks.map((bookmark) =>
+          bookmark.id === bookmarkId ? { ...bookmark, icon: dataUrl } : bookmark,
+        ),
+      })
+
+      setUploadMessage('Custom icon uploaded.')
+    } catch {
+      setUploadError('Could not upload icon.')
+    }
+  }
+
+  const handleClearIconForBookmark = (bookmarkId: string) => {
+    setUploadMessage(null)
+    setUploadError(null)
+    onConfigChange?.({
+      bookmarks: config.bookmarks.map((bookmark) =>
+        bookmark.id === bookmarkId
+          ? { ...bookmark, icon: undefined }
+          : bookmark,
+      ),
+    })
+    setUploadMessage('Custom icon removed.')
   }
 
   const toggleGroup = (groupId: string) => {
@@ -194,6 +310,36 @@ export function AppLauncherWidget({
         </div>
       )}
 
+      {isEditing && (
+        <>
+          <input
+            ref={iconInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif"
+            className="hidden"
+            onChange={(event) => {
+              const file = event.target.files?.[0]
+              const bookmarkId = pendingBookmarkId
+              event.currentTarget.value = ''
+
+              if (!file || !bookmarkId) return
+
+              void handleIconUploadForBookmark(file, bookmarkId)
+            }}
+          />
+
+          {uploadError && (
+            <p className="text-xs text-red-400 px-1" role="alert">
+              {uploadError}
+            </p>
+          )}
+
+          {!uploadError && uploadMessage && (
+            <p className="text-xs text-emerald-400 px-1">{uploadMessage}</p>
+          )}
+        </>
+      )}
+
       <div className="flex-1 overflow-y-auto -mr-1 pr-1 space-y-3">
         {ungroupedBookmarks.length > 0 && (
           <div className="grid gap-1" style={gridStyle}>
@@ -201,7 +347,13 @@ export function AppLauncherWidget({
               <BookmarkItem
                 key={bookmark.id}
                 bookmark={bookmark}
+                isEditing={isEditing}
                 onClick={() => handleOpenBookmark(bookmark)}
+                onRequestUpload={() => {
+                  setPendingBookmarkId(bookmark.id)
+                  iconInputRef.current?.click()
+                }}
+                onClearIcon={() => handleClearIconForBookmark(bookmark.id)}
               />
             ))}
           </div>
@@ -225,7 +377,13 @@ export function AppLauncherWidget({
                     <BookmarkItem
                       key={bookmark.id}
                       bookmark={bookmark}
+                      isEditing={isEditing}
                       onClick={() => handleOpenBookmark(bookmark)}
+                      onRequestUpload={() => {
+                        setPendingBookmarkId(bookmark.id)
+                        iconInputRef.current?.click()
+                      }}
+                      onClearIcon={() => handleClearIconForBookmark(bookmark.id)}
                     />
                   ))}
                 </div>
@@ -245,7 +403,7 @@ export function AppLauncherWidget({
   )
 }
 
-export const appLauncherWidgetDefinition: WidgetDefinition<AppLauncherWidgetConfig> =
+export const appLauncherWidgetDefinition: Widget<typeof appLauncherConfigSchema> =
   {
     type: 'app-launcher',
     displayName: 'App Launcher',

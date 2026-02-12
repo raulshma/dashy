@@ -1,59 +1,86 @@
+import { lazy } from 'react'
 import { registerWidget } from '../registry'
-import { HealthCheckWidget, healthCheckWidgetDefinition } from './health-check'
-import { AppLauncherWidget, appLauncherWidgetDefinition } from './app-launcher'
-import { RssWidget, rssWidgetDefinition } from './rss'
-import { WeatherWidget, weatherWidgetDefinition } from './weather'
-import { MarkdownWidget, markdownWidgetDefinition } from './markdown'
-import { IframeWidget, iframeWidgetDefinition } from './iframe'
-import {
-  JsonRendererWidget,
-  jsonRendererWidgetDefinition,
-} from './json-renderer'
-import { ApiFetchWidget, apiFetchWidgetDefinition } from './api-fetch'
+import { healthCheckWidgetDefinition } from './health-check'
+import { appLauncherWidgetDefinition } from './app-launcher'
+import { rssWidgetDefinition } from './rss'
+import { weatherWidgetDefinition } from './weather'
+import { markdownWidgetDefinition } from './markdown'
+import { iframeWidgetDefinition } from './iframe'
+import { jsonRendererWidgetDefinition } from './json-renderer'
+import { apiFetchWidgetDefinition } from './api-fetch'
+import { notesWidgetDefinition } from './notes'
 
 export function registerBuiltinWidgets(): void {
   registerWidget({
     definition: healthCheckWidgetDefinition,
-    component: HealthCheckWidget,
+    component: lazy(() =>
+      import('./health-check').then((module) => ({
+        default: module.HealthCheckWidget,
+      })),
+    ),
   })
   registerWidget({
     definition: appLauncherWidgetDefinition,
-    component: AppLauncherWidget,
+    component: lazy(() =>
+      import('./app-launcher').then((module) => ({
+        default: module.AppLauncherWidget,
+      })),
+    ),
   })
   registerWidget({
     definition: rssWidgetDefinition,
-    component: RssWidget,
+    component: lazy(() =>
+      import('./rss').then((module) => ({
+        default: module.RssWidget,
+      })),
+    ),
   })
   registerWidget({
     definition: weatherWidgetDefinition,
-    component: WeatherWidget,
+    component: lazy(() =>
+      import('./weather').then((module) => ({
+        default: module.WeatherWidget,
+      })),
+    ),
   })
   registerWidget({
     definition: markdownWidgetDefinition,
-    component: MarkdownWidget,
+    component: lazy(() =>
+      import('./markdown').then((module) => ({
+        default: module.MarkdownWidget,
+      })),
+    ),
   })
   registerWidget({
     definition: iframeWidgetDefinition,
-    component: IframeWidget,
+    component: lazy(() =>
+      import('./iframe').then((module) => ({
+        default: module.IframeWidget,
+      })),
+    ),
   })
   registerWidget({
     definition: jsonRendererWidgetDefinition,
-    component: JsonRendererWidget,
+    component: lazy(() =>
+      import('./json-renderer').then((module) => ({
+        default: module.JsonRendererWidget,
+      })),
+    ),
   })
   registerWidget({
     definition: apiFetchWidgetDefinition,
-    component: ApiFetchWidget,
+    component: lazy(() =>
+      import('./api-fetch').then((module) => ({
+        default: module.ApiFetchWidget,
+      })),
+    ),
+  })
+  registerWidget({
+    definition: notesWidgetDefinition,
+    component: lazy(() =>
+      import('./notes').then((module) => ({
+        default: module.NotesWidget,
+      })),
+    ),
   })
 }
-
-export { HealthCheckWidget, healthCheckWidgetDefinition } from './health-check'
-export { AppLauncherWidget, appLauncherWidgetDefinition } from './app-launcher'
-export { RssWidget, rssWidgetDefinition } from './rss'
-export { WeatherWidget, weatherWidgetDefinition } from './weather'
-export { MarkdownWidget, markdownWidgetDefinition } from './markdown'
-export { IframeWidget, iframeWidgetDefinition } from './iframe'
-export {
-  JsonRendererWidget,
-  jsonRendererWidgetDefinition,
-} from './json-renderer'
-export { ApiFetchWidget, apiFetchWidgetDefinition } from './api-fetch'

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { WidgetDefinition, WidgetRenderProps } from '@shared/contracts'
+import type { Widget, WidgetRenderProps } from '@shared/contracts'
 import { GlassCard } from '@/components/ui/glass-card'
 import { Button } from '@/components/ui/button'
 
@@ -115,7 +115,7 @@ export function IframeWidget({
   )
 }
 
-export const iframeWidgetDefinition: WidgetDefinition<IframeWidgetConfig> = {
+export const iframeWidgetDefinition: Widget<typeof iframeWidgetConfigSchema> = {
   type: 'iframe',
   displayName: 'Iframe Embed',
   description:

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
-import type { WidgetDefinition, WidgetRenderProps } from '@shared/contracts'
+import type { Widget, WidgetRenderProps } from '@shared/contracts'
 import { GlassCard } from '@/components/ui/glass-card'
 import { Icon } from '@/components/ui/icon'
 import {
@@ -241,7 +241,7 @@ export function HealthCheckWidget({
   )
 }
 
-export const healthCheckWidgetDefinition: WidgetDefinition<HealthCheckWidgetConfig> =
+export const healthCheckWidgetDefinition: Widget<typeof healthCheckWidgetConfigSchema> =
   {
     type: 'health-check',
     displayName: 'Health Check',

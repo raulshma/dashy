@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { z } from 'zod'
-import type { WidgetDefinition, WidgetRenderProps } from '@shared/contracts'
+import type { Widget, WidgetRenderProps } from '@shared/contracts'
 import { GlassCard } from '@/components/ui/glass-card'
 
 const jsonValueSchema: z.ZodType<unknown> = z.lazy(() =>
@@ -157,7 +157,7 @@ export function JsonRendererWidget({
   )
 }
 
-export const jsonRendererWidgetDefinition: WidgetDefinition<JsonRendererWidgetConfig> =
+export const jsonRendererWidgetDefinition: Widget<typeof jsonRendererWidgetConfigSchema> =
   {
     type: 'json-renderer',
     displayName: 'JSON Renderer',

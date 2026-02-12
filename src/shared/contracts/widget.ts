@@ -12,6 +12,18 @@ import type { z } from 'zod'
 export type WidgetConfigSchema = Record<string, unknown>
 
 /**
+ * Generic widget definition inferred from a Zod schema.
+ * Prefer this over manually specifying `WidgetDefinition<TConfig>`.
+ */
+export type Widget<TSchema extends z.ZodTypeAny> = Omit<
+  WidgetDefinition<z.infer<TSchema>>,
+  'configSchema' | 'defaultConfig'
+> & {
+  configSchema: TSchema
+  defaultConfig: z.infer<TSchema>
+}
+
+/**
  * Props passed to every widget component at render time.
  */
 export interface WidgetRenderProps<

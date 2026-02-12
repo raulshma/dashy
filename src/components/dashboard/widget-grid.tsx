@@ -43,6 +43,10 @@ interface WidgetGridProps {
   isEditable?: boolean
   onLayoutChange?: (layouts: Array<WidgetLayout>) => void
   onWidgetSelect?: (widgetId: string) => void
+  onWidgetConfigure?: (widgetId: string) => void
+  onWidgetDuplicate?: (widgetId: string) => void
+  onWidgetDelete?: (widgetId: string) => void
+  renderWidgetContent?: (widget: WidgetItem) => React.ReactNode
   selectedWidgetId?: string | null
   className?: string
 }
@@ -68,61 +72,87 @@ function WidgetSlot({
   isSelected,
   isEditable,
   onClick,
+  onConfigure,
+  onDuplicate,
+  onDelete,
+  children,
 }: {
   widget: WidgetItem
   isSelected: boolean
   isEditable: boolean
   onClick?: () => void
+  onConfigure?: () => void
+  onDuplicate?: () => void
+  onDelete?: () => void
+  children?: React.ReactNode
 }) {
   return (
     <GlassCard
       variant="elevated"
-      interactive={!isEditable}
+      interactive
       padding="none"
       className={cn(
-        'h-full overflow-hidden',
+        'group h-full overflow-hidden relative',
         isSelected &&
           'ring-2 ring-primary ring-offset-2 ring-offset-background',
         isEditable && 'cursor-move',
       )}
       onClick={onClick}
     >
+      {isEditable && (
+        <div
+          className={cn(
+            'absolute right-2 top-2 z-20 flex items-center gap-1 rounded-lg border border-border/70 bg-background/85 p-1 shadow-sm backdrop-blur transition-opacity',
+            isSelected
+              ? 'opacity-100'
+              : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100',
+          )}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <span className="px-2 text-[10px] uppercase tracking-wide text-muted-foreground">
+            Drag/Resize
+          </span>
+          <button
+            type="button"
+            className="rounded px-2 py-1 text-xs hover:bg-muted transition-colors"
+            onClick={onConfigure}
+            aria-label="Configure widget"
+          >
+            Configure
+          </button>
+          <button
+            type="button"
+            className="rounded px-2 py-1 text-xs hover:bg-muted transition-colors"
+            onClick={onDuplicate}
+            aria-label="Duplicate widget"
+          >
+            Duplicate
+          </button>
+          <button
+            type="button"
+            className="rounded px-2 py-1 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+            onClick={onDelete}
+            aria-label="Delete widget"
+          >
+            Delete
+          </button>
+        </div>
+      )}
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
           <span className="text-sm font-medium truncate">
             {widget.title ?? widget.type}
           </span>
-          {isEditable && (
-            <div className="flex items-center gap-1">
-              <button
-                className="p-1 rounded hover:bg-muted transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation()
-                }}
-                aria-label="Widget settings"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="1" />
-                  <circle cx="19" cy="12" r="1" />
-                  <circle cx="5" cy="12" r="1" />
-                </svg>
-              </button>
-            </div>
-          )}
+          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            {widget.type}
+          </span>
         </div>
         <div className="flex-1 p-3 overflow-auto">
-          <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-            {widget.type}
-          </div>
+          {children ?? (
+            <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+              {widget.type}
+            </div>
+          )}
         </div>
       </div>
     </GlassCard>
@@ -167,6 +197,10 @@ export function WidgetGrid({
   isEditable = false,
   onLayoutChange,
   onWidgetSelect,
+  onWidgetConfigure,
+  onWidgetDuplicate,
+  onWidgetDelete,
+  renderWidgetContent,
   selectedWidgetId,
   className,
 }: WidgetGridProps) {
@@ -232,7 +266,9 @@ export function WidgetGrid({
             isSelected={selectedWidgetId === widget.id}
             isEditable={false}
             onClick={() => onWidgetSelect?.(widget.id)}
-          />
+          >
+            {renderWidgetContent?.(widget)}
+          </WidgetSlot>
         ))}
       </div>
     )
@@ -270,7 +306,12 @@ export function WidgetGrid({
               isSelected={selectedWidgetId === widget.id}
               isEditable={isEditable}
               onClick={() => onWidgetSelect?.(widget.id)}
-            />
+              onConfigure={() => onWidgetConfigure?.(widget.id)}
+              onDuplicate={() => onWidgetDuplicate?.(widget.id)}
+              onDelete={() => onWidgetDelete?.(widget.id)}
+            >
+              {renderWidgetContent?.(widget)}
+            </WidgetSlot>
           </div>
         ))}
       </GridLayout>

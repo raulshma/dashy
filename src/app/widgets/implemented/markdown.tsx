@@ -2,7 +2,7 @@ import { z } from 'zod'
 import Markdown, { defaultUrlTransform } from 'react-markdown'
 import rehypeSanitize from 'rehype-sanitize'
 import remarkGfm from 'remark-gfm'
-import type { WidgetDefinition, WidgetRenderProps } from '@shared/contracts'
+import type { Widget, WidgetRenderProps } from '@shared/contracts'
 import { GlassCard } from '@/components/ui/glass-card'
 
 export const markdownWidgetConfigSchema = z.object({
@@ -64,7 +64,7 @@ export function MarkdownWidget({
   )
 }
 
-export const markdownWidgetDefinition: WidgetDefinition<MarkdownWidgetConfig> = {
+export const markdownWidgetDefinition: Widget<typeof markdownWidgetConfigSchema> = {
   type: 'markdown',
   displayName: 'Markdown',
   description: 'Render rich markdown notes with secure sanitization',

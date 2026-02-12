@@ -4,6 +4,7 @@
  * Import contracts via: `import type { WidgetDefinition } from '@shared/contracts'`
  */
 export type {
+  Widget,
   WidgetConfigSchema,
   WidgetRenderProps,
   WidgetDefinition,

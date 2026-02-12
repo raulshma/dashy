@@ -80,6 +80,40 @@ async function verifyWidgetOwnership(
   }
 }
 
+async function getOwnedWidget(widgetId: string, userId: string) {
+  const [widget] = await db
+    .select()
+    .from(widgets)
+    .where(eq(widgets.id, widgetId))
+    .limit(1)
+
+  if (!widget) {
+    throw new NotFoundError('Widget', widgetId)
+  }
+
+  const [page] = await db
+    .select({ dashboardId: pages.dashboardId })
+    .from(pages)
+    .where(eq(pages.id, widget.pageId))
+    .limit(1)
+
+  if (!page) {
+    throw new NotFoundError('Page', widget.pageId)
+  }
+
+  const [dashboard] = await db
+    .select({ userId: dashboards.userId })
+    .from(dashboards)
+    .where(eq(dashboards.id, page.dashboardId))
+    .limit(1)
+
+  if (!dashboard || dashboard.userId !== userId) {
+    throw new ForbiddenError('You do not have access to this widget')
+  }
+
+  return widget
+}
+
 // ─── Add Widget ────────────────────────────────────
 
 const addWidgetInputSchema = z.object({
@@ -257,6 +291,71 @@ export const deleteWidgetFn = protectedPostFn
       await db.delete(widgets).where(eq(widgets.id, data.id))
 
       return { success: true, data: { deleted: true } }
+    } catch (error) {
+      return handleServerError(error)
+    }
+  })
+
+// ─── Duplicate Widget ──────────────────────────────
+
+const duplicateWidgetInputSchema = z.object({
+  id: z.string().uuid(),
+  offsetX: z.number().int().min(-12).max(12).default(1),
+  offsetY: z.number().int().min(-12).max(12).default(1),
+})
+
+export const duplicateWidgetFn = protectedPostFn
+  .inputValidator(duplicateWidgetInputSchema)
+  .handler(async ({ data, context }) => {
+    try {
+      const userId = context.user.id
+      const sourceWidget = await getOwnedWidget(data.id, userId)
+
+      const maxX = Math.max(0, 12 - sourceWidget.w)
+      const nextX = Math.min(
+        maxX,
+        Math.max(0, sourceWidget.x + data.offsetX),
+      )
+      const nextY = Math.max(0, sourceWidget.y + data.offsetY)
+
+      const duplicatedTitle = sourceWidget.title
+        ? `${sourceWidget.title} (Copy)`.slice(0, 100)
+        : null
+
+      const [duplicatedWidget] = await db
+        .insert(widgets)
+        .values({
+          pageId: sourceWidget.pageId,
+          type: sourceWidget.type,
+          title: duplicatedTitle,
+          x: nextX,
+          y: nextY,
+          w: sourceWidget.w,
+          h: sourceWidget.h,
+          config: structuredClone(sourceWidget.config ?? {}),
+        })
+        .returning()
+
+      if (!duplicatedWidget) {
+        throw new Error('Failed to duplicate widget')
+      }
+
+      return {
+        success: true,
+        data: {
+          id: duplicatedWidget.id,
+          pageId: duplicatedWidget.pageId,
+          type: duplicatedWidget.type,
+          title: duplicatedWidget.title,
+          x: duplicatedWidget.x,
+          y: duplicatedWidget.y,
+          w: duplicatedWidget.w,
+          h: duplicatedWidget.h,
+          config: duplicatedWidget.config,
+          createdAt: duplicatedWidget.createdAt,
+          updatedAt: duplicatedWidget.updatedAt,
+        },
+      }
     } catch (error) {
       return handleServerError(error)
     }

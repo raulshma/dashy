@@ -15,3 +15,17 @@ export {
   registerSchema,
   loginSchema,
 } from './dashboard'
+
+export {
+  yamlLayoutSchema,
+  yamlWidgetSchema,
+  yamlPageSchema,
+  dashboardYamlSchema,
+} from './dashboard.yaml.schema'
+
+export type {
+  YamlLayout,
+  YamlWidget,
+  YamlPage,
+  DashboardYaml,
+} from './dashboard.yaml.schema'
