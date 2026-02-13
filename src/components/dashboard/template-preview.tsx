@@ -16,18 +16,18 @@ interface TemplatePreviewProps {
 }
 
 const WIDGET_COLORS: Record<string, string> = {
-  'health-check': 'bg-emerald-500/20 border-emerald-500/40',
-  'app-launcher': 'bg-blue-500/20 border-blue-500/40',
-  rss: 'bg-orange-500/20 border-orange-500/40',
-  weather: 'bg-sky-500/20 border-sky-500/40',
-  iframe: 'bg-violet-500/20 border-violet-500/40',
-  'api-fetch': 'bg-cyan-500/20 border-cyan-500/40',
-  'json-renderer': 'bg-amber-500/20 border-amber-500/40',
-  markdown: 'bg-purple-500/20 border-purple-500/40',
-  notes: 'bg-yellow-500/20 border-yellow-500/40',
+  'health-check': 'bg-widget-health/20 border-widget-health/40',
+  'app-launcher': 'bg-widget-launcher/20 border-widget-launcher/40',
+  rss: 'bg-widget-rss/20 border-widget-rss/40',
+  weather: 'bg-widget-weather/20 border-widget-weather/40',
+  iframe: 'bg-widget-iframe/20 border-widget-iframe/40',
+  'api-fetch': 'bg-widget-api/20 border-widget-api/40',
+  'json-renderer': 'bg-widget-markdown/20 border-widget-markdown/40',
+  markdown: 'bg-widget-markdown/20 border-widget-markdown/40',
+  notes: 'bg-widget-notes/20 border-widget-notes/40',
 }
 
-const DEFAULT_WIDGET_COLOR = 'bg-white/10 border-white/20'
+const DEFAULT_WIDGET_COLOR = 'bg-muted/30 border-muted-foreground/20'
 
 const GRID_COLS = 12
 const ROW_HEIGHT = 24
@@ -63,11 +63,11 @@ function WidgetBlock({
         <Icon
           icon={definition.icon as never}
           size={scale < 0.5 ? 'xs' : 'sm'}
-          className="text-white/70 shrink-0"
+          className="text-foreground/70 shrink-0"
         />
       )}
       {widget.title && scale >= 0.6 && (
-        <span className="ml-1 truncate text-[9px] text-white/60">
+        <span className="ml-1 truncate text-[9px] text-muted-foreground">
           {widget.title}
         </span>
       )}
@@ -90,12 +90,12 @@ function PagePreview({
 
   return (
     <div
-      className="relative w-full rounded border border-white/10 bg-black/20"
+      className="relative w-full rounded border border-border bg-muted/30"
       style={{ height: gridHeight }}
     >
       <div className="absolute inset-0 grid grid-cols-12 gap-px p-px opacity-20">
         {Array.from({ length: GRID_COLS }).map((_, i) => (
-          <div key={i} className="border-r border-white/10 last:border-r-0" />
+          <div key={i} className="border-r border-border last:border-r-0" />
         ))}
       </div>
       {page.widgets.map((widget, idx) => (
@@ -106,7 +106,7 @@ function PagePreview({
         />
       ))}
       {page.widgets.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center text-xs text-white/30">
+        <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
           Empty page
         </div>
       )}
@@ -128,7 +128,7 @@ export function TemplatePreview({
     return (
       <div
         className={cn(
-          'flex h-24 items-center justify-center rounded border border-white/10 bg-black/20 text-sm text-white/30',
+          'flex h-24 items-center justify-center rounded border border-border bg-muted/30 text-sm text-muted-foreground',
           className,
         )}
       >
@@ -148,8 +148,8 @@ export function TemplatePreview({
               className={cn(
                 'shrink-0 rounded-md px-2 py-1 text-xs transition-all',
                 activePage === idx
-                  ? 'bg-white/15 text-white'
-                  : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/70',
+                  ? 'bg-primary/20 text-primary'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80',
               )}
             >
               {page.name || `Page ${idx + 1}`}
@@ -161,7 +161,7 @@ export function TemplatePreview({
       <PagePreview page={pages[activePage]} scale={scale} />
 
       {pages.length > 1 && (
-        <div className="flex items-center justify-between text-[10px] text-white/40">
+        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
           <span>
             Page {activePage + 1} of {pages.length}
           </span>
@@ -186,7 +186,7 @@ export function TemplateThumbnail({
     return (
       <div
         className={cn(
-          'flex h-full items-center justify-center bg-black/20 text-white/20',
+          'flex h-full items-center justify-center bg-muted/30 text-muted-foreground',
           className,
         )}
       >
@@ -215,7 +215,7 @@ export function TemplateThumbnail({
 
   return (
     <div
-      className={cn('relative w-full rounded bg-black/20', className)}
+      className={cn('relative w-full rounded bg-muted/30', className)}
       style={{ height: gridHeight }}
     >
       {firstPage.widgets.map((widget, idx) => (

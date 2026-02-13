@@ -108,7 +108,10 @@ export function WeatherWidget({
     setLoading(true)
     fetchWeather()
 
-    refreshRef.current = window.setInterval(fetchWeather, config.refreshInterval)
+    refreshRef.current = window.setInterval(
+      fetchWeather,
+      config.refreshInterval,
+    )
 
     return () => {
       if (refreshRef.current) {
@@ -151,7 +154,7 @@ export function WeatherWidget({
 
   if (error && !weather) {
     return (
-      <GlassCard className="h-full p-4 flex flex-col items-center justify-center gap-2 text-red-400">
+      <GlassCard className="h-full p-4 flex flex-col items-center justify-center gap-2 text-destructive">
         <p className="text-sm text-center">{error}</p>
       </GlassCard>
     )
@@ -173,7 +176,9 @@ export function WeatherWidget({
     <GlassCard className="h-full p-3 flex flex-col gap-3 overflow-hidden">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-sm font-medium truncate">{formatLocation(weather)}</p>
+          <p className="text-sm font-medium truncate">
+            {formatLocation(weather)}
+          </p>
           <p className="text-xs text-muted-foreground truncate">
             Updated {format(new Date(weather.fetchedAt), 'HH:mm')}
           </p>
@@ -197,18 +202,24 @@ export function WeatherWidget({
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Conditions</p>
-          <p className="text-sm font-medium">{weather.current.condition.description}</p>
+          <p className="text-sm font-medium">
+            {weather.current.condition.description}
+          </p>
           <p className="text-xs text-muted-foreground">
             Wind {Math.round(weather.current.windSpeed)} {windUnit}
           </p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Humidity</p>
-          <p className="text-sm font-medium">{Math.round(weather.current.humidity)}%</p>
+          <p className="text-sm font-medium">
+            {Math.round(weather.current.humidity)}%
+          </p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Pressure</p>
-          <p className="text-sm font-medium">{Math.round(weather.current.pressure)} hPa</p>
+          <p className="text-sm font-medium">
+            {Math.round(weather.current.pressure)} hPa
+          </p>
         </div>
       </div>
 
@@ -241,7 +252,7 @@ export function WeatherWidget({
       )}
 
       {error && weather && (
-        <p className="text-xs text-red-400 truncate" title={error}>
+        <p className="text-xs text-destructive truncate" title={error}>
           {error}
         </p>
       )}
@@ -249,24 +260,26 @@ export function WeatherWidget({
   )
 }
 
-export const weatherWidgetDefinition: Widget<typeof weatherWidgetConfigSchema> = {
-  type: 'weather',
-  displayName: 'Weather',
-  description: 'Current conditions and short forecast for a city or coordinates',
-  icon: 'cloud',
-  category: 'utilities',
-  configSchema: weatherWidgetConfigSchema,
-  defaultConfig: {
-    locationMode: 'city',
-    city: 'Berlin',
-    latitude: 52.52,
-    longitude: 13.41,
-    units: 'metric',
-    forecastDays: 5,
-    refreshInterval: 600000,
-    showForecast: true,
-  },
-  defaultSize: { w: 3, h: 2 },
-  minSize: { w: 2, h: 2 },
-  maxSize: { w: 5, h: 4 },
-}
+export const weatherWidgetDefinition: Widget<typeof weatherWidgetConfigSchema> =
+  {
+    type: 'weather',
+    displayName: 'Weather',
+    description:
+      'Current conditions and short forecast for a city or coordinates',
+    icon: 'cloud',
+    category: 'utilities',
+    configSchema: weatherWidgetConfigSchema,
+    defaultConfig: {
+      locationMode: 'city',
+      city: 'Berlin',
+      latitude: 52.52,
+      longitude: 13.41,
+      units: 'metric',
+      forecastDays: 5,
+      refreshInterval: 600000,
+      showForecast: true,
+    },
+    defaultSize: { w: 3, h: 2 },
+    minSize: { w: 2, h: 2 },
+    maxSize: { w: 5, h: 4 },
+  }

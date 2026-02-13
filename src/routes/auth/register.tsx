@@ -4,95 +4,95 @@
  * Glassmorphism-styled registration form with validation and password strength.
  * Route: /auth/register
  */
-import { useMemo, useState } from 'react';
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { registerFn } from '@server/api/auth';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { useMemo, useState } from 'react'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { registerFn } from '@server/api/auth'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+} from '@/components/ui/card'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 export const Route = createFileRoute('/auth/register')({
   component: RegisterPage,
-});
+})
 
 /** Simple password strength calculator */
 function getPasswordStrength(password: string): {
-  score: number;
-  label: string;
-  color: string;
+  score: number
+  label: string
+  colorClass: string
 } {
-  let score = 0;
-  if (password.length >= 8) score++;
-  if (password.length >= 12) score++;
-  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
-  if (/\d/.test(password)) score++;
-  if (/[^a-zA-Z0-9]/.test(password)) score++;
+  let score = 0
+  if (password.length >= 8) score++
+  if (password.length >= 12) score++
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++
+  if (/\d/.test(password)) score++
+  if (/[^a-zA-Z0-9]/.test(password)) score++
 
-  if (score <= 1) return { score, label: 'Weak', color: 'bg-red-500' };
-  if (score <= 2) return { score, label: 'Fair', color: 'bg-yellow-500' };
-  if (score <= 3) return { score, label: 'Good', color: 'bg-green-500' };
-  return { score, label: 'Strong', color: 'bg-cyan-500' };
+  if (score <= 1) return { score, label: 'Weak', colorClass: 'bg-destructive' }
+  if (score <= 2) return { score, label: 'Fair', colorClass: 'bg-warning' }
+  if (score <= 3) return { score, label: 'Good', colorClass: 'bg-success' }
+  return { score, label: 'Strong', colorClass: 'bg-info' }
 }
 
 function RegisterPage() {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
-  const [displayName, setDisplayName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<
     Record<string, Array<string> | undefined>
-  >({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  >({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const strength = useMemo(
     () => (password.length > 0 ? getPasswordStrength(password) : null),
     [password],
-  );
+  )
 
   const passwordsMatch =
-    confirmPassword.length === 0 || password === confirmPassword;
+    confirmPassword.length === 0 || password === confirmPassword
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setFieldErrors({});
+    e.preventDefault()
+    setError(null)
+    setFieldErrors({})
 
     if (password !== confirmPassword) {
-      setFieldErrors({ confirmPassword: ['Passwords do not match'] });
-      return;
+      setFieldErrors({ confirmPassword: ['Passwords do not match'] })
+      return
     }
 
-    setIsSubmitting(true);
+    setIsSubmitting(true)
 
     try {
       const result = await registerFn({
         data: { email, password, displayName },
-      });
+      })
 
       if (result.success) {
-        navigate({ to: '/' });
+        navigate({ to: '/' })
       } else if (result.error) {
-        setError(result.error.message);
+        setError(result.error.message)
         if (result.error.fieldErrors) {
-          setFieldErrors(result.error.fieldErrors);
+          setFieldErrors(result.error.fieldErrors)
         }
       }
     } catch {
-      setError('An unexpected error occurred');
+      setError('An unexpected error occurred')
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
   }
 
@@ -128,8 +128,8 @@ function RegisterPage() {
                     x2="40"
                     y2="40"
                   >
-                    <stop stopColor="#6366f1" />
-                    <stop offset="1" stopColor="#8b5cf6" />
+                    <stop className="[stop-color:var(--primary)]" />
+                    <stop offset="1" className="[stop-color:var(--chart-5)]" />
                   </linearGradient>
                 </defs>
               </svg>
@@ -285,24 +285,25 @@ function RegisterPage() {
                     )}
                   </Button>
                 </div>
-                
+
                 {/* Password Strength */}
                 {strength && (
                   <div className="space-y-1">
                     <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
                       <div
-                        className={`h-full ${strength.color} transition-all duration-300`}
+                        className={`h-full ${strength.colorClass} transition-all duration-300`}
                         style={{
                           width: `${(strength.score / 5) * 100}%`,
                         }}
                       />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Password strength: <span className="font-medium">{strength.label}</span>
+                      Password strength:{' '}
+                      <span className="font-medium">{strength.label}</span>
                     </p>
                   </div>
                 )}
-                
+
                 {fieldErrors.password?.map((msg, i) => (
                   <p key={i} className="text-sm text-destructive">
                     {msg}
@@ -357,5 +358,5 @@ function RegisterPage() {
         </Card>
       </div>
     </div>
-  );
+  )
 }

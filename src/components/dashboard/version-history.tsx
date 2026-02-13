@@ -35,6 +35,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
+import { Icon } from '@/components/ui/icon'
+import { Clock01Icon } from '@hugeicons/core-free-icons'
 
 interface VersionHistoryProps {
   dashboardId: string
@@ -280,20 +282,7 @@ export function VersionHistory({
 
   const defaultTrigger = (
     <Button variant="outline" size="sm">
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="mr-1.5"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <polyline points="12 6 12 12 16 14" />
-      </svg>
+      <Icon icon={Clock01Icon} size="sm" className="mr-1.5" />
       History
     </Button>
   )
@@ -322,20 +311,11 @@ export function VersionHistory({
                 <VersionListSkeleton />
               ) : versions.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <svg
-                    width="48"
-                    height="48"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                  <Icon
+                    icon={Clock01Icon}
+                    size="2xl"
                     className="mx-auto mb-3 opacity-50"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12 6 12 12 16 14" />
-                  </svg>
+                  />
                   <p className="text-sm">No versions yet</p>
                   <p className="text-xs mt-1">
                     Versions are created automatically when you make changes

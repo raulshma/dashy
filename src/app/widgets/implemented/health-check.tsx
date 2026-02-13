@@ -33,17 +33,17 @@ export const healthCheckConfigSchema = z.object({
 export type HealthCheckWidgetConfig = z.infer<typeof healthCheckConfigSchema>
 
 const statusColors: Record<HealthStatus, string> = {
-  healthy: 'text-green-400',
-  degraded: 'text-yellow-400',
-  unhealthy: 'text-red-400',
-  unknown: 'text-gray-400',
+  healthy: 'text-status-healthy',
+  degraded: 'text-status-degraded',
+  unhealthy: 'text-status-unhealthy',
+  unknown: 'text-status-unknown',
 }
 
 const statusBgColors: Record<HealthStatus, string> = {
-  healthy: 'bg-green-400/20',
-  degraded: 'bg-yellow-400/20',
-  unhealthy: 'bg-red-400/20',
-  unknown: 'bg-gray-400/20',
+  healthy: 'bg-status-healthy/20',
+  degraded: 'bg-status-degraded/20',
+  unhealthy: 'bg-status-unhealthy/20',
+  unknown: 'bg-status-unknown/20',
 }
 
 export function HealthCheckWidget({
@@ -231,7 +231,7 @@ export function HealthCheckWidget({
 
       {(latest?.error || error) && (
         <p
-          className="text-xs text-red-400 truncate"
+          className="text-xs text-destructive truncate"
           title={latest?.error ?? error ?? ''}
         >
           {latest?.error ?? error}
@@ -241,23 +241,24 @@ export function HealthCheckWidget({
   )
 }
 
-export const healthCheckWidgetDefinition: Widget<typeof healthCheckWidgetConfigSchema> =
-  {
-    type: 'health-check',
-    displayName: 'Health Check',
-    description: 'Monitor the health and uptime of HTTP endpoints or TCP ports',
-    icon: 'pulse',
-    category: 'monitoring',
-    configSchema: healthCheckConfigSchema,
-    defaultConfig: {
-      name: 'My Service',
-      checkType: 'http',
-      url: '',
-      method: 'GET',
-      timeout: 10000,
-      interval: 60000,
-    },
-    defaultSize: { w: 2, h: 2 },
-    minSize: { w: 2, h: 1 },
-    maxSize: { w: 4, h: 3 },
-  }
+export const healthCheckWidgetDefinition: Widget<
+  typeof healthCheckConfigSchema
+> = {
+  type: 'health-check',
+  displayName: 'Health Check',
+  description: 'Monitor the health and uptime of HTTP endpoints or TCP ports',
+  icon: 'pulse',
+  category: 'monitoring',
+  configSchema: healthCheckConfigSchema,
+  defaultConfig: {
+    name: 'My Service',
+    checkType: 'http',
+    url: '',
+    method: 'GET',
+    timeout: 10000,
+    interval: 60000,
+  },
+  defaultSize: { w: 2, h: 2 },
+  minSize: { w: 2, h: 1 },
+  maxSize: { w: 4, h: 3 },
+}

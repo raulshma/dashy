@@ -4,13 +4,13 @@
  * Allows authenticated users to update their profile and change password.
  * Route: /_authed/settings (rendered at /settings for users)
  */
-import { useState } from 'react';
-import { createFileRoute } from '@tanstack/react-router';
-import { logoutFn, updateAccountFn } from '@server/api/auth';
+import { useState } from 'react'
+import { createFileRoute } from '@tanstack/react-router'
+import { logoutFn, updateAccountFn } from '@server/api/auth'
 
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import {
   Card,
   CardContent,
@@ -18,94 +18,99 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+} from '@/components/ui/card'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import {
+  CheckmarkCircle02Icon,
+  InformationCircleIcon,
+} from '@hugeicons/core-free-icons'
+import { Icon } from '@/components/ui/icon'
 
 export const Route = createFileRoute('/_authed/settings')({
   component: SettingsPage,
-});
+})
 
 function SettingsPage() {
-  const { user } = Route.useRouteContext();
+  const { user } = Route.useRouteContext()
 
-  const [displayName, setDisplayName] = useState(user.displayName);
-  const [email, setEmail] = useState(user.email);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [displayName, setDisplayName] = useState(user.displayName)
+  const [email, setEmail] = useState(user.email)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   async function handleProfileUpdate(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-    setIsSubmitting(true);
+    e.preventDefault()
+    setError(null)
+    setSuccess(null)
+    setIsSubmitting(true)
 
     try {
-      const data: Record<string, string> = {};
+      const data: Record<string, string> = {}
 
-      if (displayName !== user.displayName) data.displayName = displayName;
-      if (email !== user.email) data.email = email;
+      if (displayName !== user.displayName) data.displayName = displayName
+      if (email !== user.email) data.email = email
 
       if (Object.keys(data).length === 0) {
-        setError('No changes to save');
-        setIsSubmitting(false);
-        return;
+        setError('No changes to save')
+        setIsSubmitting(false)
+        return
       }
 
-      const result = await updateAccountFn({ data });
+      const result = await updateAccountFn({ data })
 
       if (result.success) {
-        setSuccess('Profile updated successfully');
+        setSuccess('Profile updated successfully')
       } else if (result.error) {
-        setError(result.error.message);
+        setError(result.error.message)
       }
     } catch {
-      setError('An unexpected error occurred');
+      setError('An unexpected error occurred')
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
   }
 
   async function handlePasswordChange(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
+    e.preventDefault()
+    setError(null)
+    setSuccess(null)
 
     if (newPassword !== confirmNewPassword) {
-      setError('New passwords do not match');
-      return;
+      setError('New passwords do not match')
+      return
     }
 
-    setIsSubmitting(true);
+    setIsSubmitting(true)
 
     try {
       const result = await updateAccountFn({
         data: { currentPassword, newPassword },
-      });
+      })
 
       if (result.success) {
-        setSuccess('Password changed successfully');
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmNewPassword('');
+        setSuccess('Password changed successfully')
+        setCurrentPassword('')
+        setNewPassword('')
+        setConfirmNewPassword('')
       } else if (result.error) {
-        setError(result.error.message);
+        setError(result.error.message)
       }
     } catch {
-      setError('An unexpected error occurred');
+      setError('An unexpected error occurred')
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
   }
 
   async function handleLogout() {
-    setIsLoggingOut(true);
+    setIsLoggingOut(true)
     try {
-      await logoutFn();
+      await logoutFn()
     } catch {
       // logoutFn throws redirect — expected
     }
@@ -122,44 +127,15 @@ function SettingsPage() {
 
       {/* Feedback */}
       {success && (
-        <Alert className="border-green-500/50 text-green-600 dark:text-green-400 [&>svg]:text-green-600 dark:[&>svg]:text-green-400">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            className="h-4 w-4"
-          >
-            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-            <path
-              d="M5.5 8l2 2 3.5-4"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+        <Alert className="border-success/50 text-success [&>svg]:text-success">
+          <Icon icon={CheckmarkCircle02Icon} size="sm" />
           <AlertTitle>Success</AlertTitle>
           <AlertDescription>{success}</AlertDescription>
         </Alert>
       )}
       {error && (
         <Alert variant="destructive">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            className="h-4 w-4"
-          >
-            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-            <path
-              d="M8 5v3.5M8 10.5v.5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-          </svg>
+          <Icon icon={InformationCircleIcon} size="sm" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
@@ -301,5 +277,5 @@ function SettingsPage() {
         </CardFooter>
       </Card>
     </div>
-  );
+  )
 }

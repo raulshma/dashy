@@ -49,8 +49,18 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { GlassCard } from '@/components/ui/glass-card'
+import { Icon } from '@/components/ui/icon'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Add01Icon,
+  ArrowLeft01Icon,
+  DashboardSquare01Icon,
+  InformationCircleIcon,
+  Loading03Icon,
+  MoreVerticalIcon,
+  Settings01Icon,
+} from '@hugeicons/core-free-icons'
 import { useActionHistory } from '@/hooks/use-action-history'
 import { useEditMode } from '@/hooks/use-edit-mode'
 import { useOptimisticMutations } from '@/hooks/use-optimistic-mutations'
@@ -1687,26 +1697,11 @@ function DashboardViewPage() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-muted-foreground space-y-4">
-        <svg
-          className="animate-spin h-8 w-8 text-primary"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          />
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-          />
-        </svg>
+        <Icon
+          icon={Loading03Icon}
+          size="xl"
+          className="text-primary animate-spin"
+        />
         <p>Loading dashboard...</p>
       </div>
     )
@@ -1716,21 +1711,11 @@ function DashboardViewPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-6">
         <div className="p-4 rounded-full bg-muted/50">
-          <svg
-            width="48"
-            height="48"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          <Icon
+            icon={InformationCircleIcon}
+            size="2xl"
             className="text-muted-foreground"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
+          />
         </div>
         <div className="space-y-2">
           <h2 className="text-xl font-semibold tracking-tight">
@@ -1803,19 +1788,11 @@ function DashboardViewPage() {
             className="shrink-0 rounded-md p-1.5 hover:bg-muted transition-colors"
             aria-label="Back to dashboards"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            <Icon
+              icon={ArrowLeft01Icon}
+              size="md"
               className="text-muted-foreground"
-            >
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
+            />
           </Link>
           <div className="min-w-0">
             <h1 className="text-lg font-semibold truncate">{dashboard.name}</h1>
@@ -1895,20 +1872,7 @@ function DashboardViewPage() {
               className={buttonVariants({ variant: 'ghost', size: 'icon' })}
             >
               <span className="sr-only">Dashboard options</span>
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="5" r="1" />
-                <circle cx="12" cy="12" r="1" />
-                <circle cx="12" cy="19" r="1" />
-              </svg>
+              <Icon icon={MoreVerticalIcon} size="sm" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem>
@@ -1917,20 +1881,7 @@ function DashboardViewPage() {
                   params={{ slug: dashboard.slug }}
                   className="flex items-center w-full"
                 >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="mr-2"
-                  >
-                    <path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
+                  <Icon icon={Settings01Icon} size="sm" className="mr-2" />
                   Settings
                 </Link>
               </DropdownMenuItem>
@@ -2162,22 +2113,11 @@ function PageContent({
     return (
       <div className="flex flex-col items-center justify-center h-full text-center space-y-6 py-20">
         <div className="p-4 rounded-full bg-muted/50">
-          <svg
-            width="48"
-            height="48"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          <Icon
+            icon={DashboardSquare01Icon}
+            size="2xl"
             className="text-muted-foreground"
-          >
-            <rect x="3" y="3" width="7" height="7" rx="1" />
-            <rect x="14" y="3" width="7" height="7" rx="1" />
-            <rect x="3" y="14" width="7" height="7" rx="1" />
-            <path d="M14 14h7M14 17h7M14 20h4" />
-          </svg>
+          />
         </div>
         <div className="space-y-2">
           <h2 className="text-xl font-semibold tracking-tight">
@@ -2195,20 +2135,7 @@ function PageContent({
             {isEditMode ? 'Done Editing' : 'Edit Widgets'}
           </Button>
           <Button onClick={onAddWidget}>
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="mr-2"
-            >
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
+            <Icon icon={Add01Icon} size="sm" className="mr-2" />
             Add Widget
           </Button>
         </div>

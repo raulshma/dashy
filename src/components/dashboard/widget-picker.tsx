@@ -50,30 +50,36 @@ function WidgetCard({
   return (
     <GlassCard
       variant="default"
-      className="group cursor-pointer p-4 transition-all hover:border-white/30 hover:bg-white/5"
+      className="group cursor-pointer p-4 transition-all hover:border-border hover:bg-muted/50"
       onClick={onSelect}
     >
       <div className="flex items-start gap-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white/10">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
           <Icon
             icon={definition.icon as never}
             size="lg"
-            className="text-white"
+            className="text-foreground"
           />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm font-medium text-white">
+          <h3 className="truncate text-sm font-medium text-foreground">
             {definition.displayName}
           </h3>
-          <p className="mt-1 line-clamp-2 text-xs text-white/60">
+          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
             {definition.description}
           </p>
           <div className="mt-2 flex items-center gap-2">
-            <Badge variant="secondary" className="text-[10px]">
+            <Badge
+              variant="secondary"
+              className="text-[length:var(--text-xs-small)]"
+            >
               {definition.defaultSize.w}x{definition.defaultSize.h}
             </Badge>
             {entry.capabilities && entry.capabilities.length > 0 && (
-              <Badge variant="outline" className="text-[10px]">
+              <Badge
+                variant="outline"
+                className="text-[length:var(--text-xs-small)]"
+              >
                 {entry.capabilities.length} perms
               </Badge>
             )}
@@ -87,11 +93,13 @@ function WidgetCard({
 function EmptyState(): React.ReactElement {
   return (
     <div className="flex h-40 flex-col items-center justify-center gap-2 text-center">
-      <div className="rounded-full bg-white/5 p-3">
-        <Icon icon={Delete02Icon} size="lg" className="text-white/40" />
+      <div className="rounded-full bg-muted p-3">
+        <Icon icon={Delete02Icon} size="lg" className="text-muted-foreground" />
       </div>
-      <p className="text-sm text-white/60">No widgets found</p>
-      <p className="text-xs text-white/40">Try a different search term</p>
+      <p className="text-sm text-muted-foreground">No widgets found</p>
+      <p className="text-xs text-muted-foreground/60">
+        Try a different search term
+      </p>
     </div>
   )
 }
@@ -159,7 +167,7 @@ export function WidgetPicker({
           <Icon
             icon={Search01Icon}
             size="sm"
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
           />
           <Input
             type="text"
@@ -194,7 +202,7 @@ export function WidgetPicker({
         ))}
       </div>
 
-      <ScrollArea className="h-[400px]">
+      <ScrollArea className="h-[--spacing(100)]">
         <div className="space-y-4 p-4 pt-0">
           {filteredWidgets.length === 0 ? (
             <EmptyState />
@@ -202,7 +210,7 @@ export function WidgetPicker({
             Object.entries(groupedWidgets).map(([category, widgets]) => (
               <div key={category}>
                 {!selectedCategory && (
-                  <h2 className="mb-2 text-xs font-medium uppercase tracking-wider text-white/40">
+                  <h2 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     {CATEGORY_LABELS[category] ?? category}
                   </h2>
                 )}

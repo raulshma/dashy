@@ -30,6 +30,28 @@
   --chart-3: oklch(0.65 0.2 35);
   --chart-4: oklch(0.65 0.2 195);
   --chart-5: oklch(0.65 0.2 305);
+
+  --success: oklch(0.65 0.18 145);
+  --success-foreground: oklch(1 0 0);
+  --warning: oklch(0.75 0.15 85);
+  --warning-foreground: oklch(0.2 0 0);
+  --info: oklch(0.65 0.15 240);
+  --info-foreground: oklch(1 0 0);
+
+  --status-healthy: oklch(0.65 0.18 145);
+  --status-degraded: oklch(0.75 0.15 85);
+  --status-unhealthy: oklch(0.6 0.2 25);
+  --status-unknown: oklch(0.5 0 0);
+
+  --widget-health: oklch(0.65 0.18 145);
+  --widget-rss: oklch(0.7 0.18 50);
+  --widget-weather: oklch(0.65 0.15 200);
+  --widget-notes: oklch(0.75 0.15 85);
+  --widget-markdown: oklch(0.65 0.2 305);
+  --widget-api: oklch(0.65 0.15 190);
+  --widget-launcher: oklch(0.65 0.2 265);
+  --widget-iframe: oklch(0.6 0.15 160);
+
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.2 0 0);
   --sidebar-primary: oklch(0.55 0.2 265);
@@ -85,6 +107,10 @@
   --duration-normal: 250ms;
   --duration-slow: 400ms;
 
+  --text-xs-small: 10px;
+  --text-xs-normal: 11px;
+  --text-sm: 12px;
+
   --breakpoint-xs: 20rem;
   --breakpoint-sm: 24rem;
   --breakpoint-md: 28rem;
@@ -131,6 +157,28 @@
   --chart-3: oklch(0.72 0.16 35);
   --chart-4: oklch(0.72 0.16 195);
   --chart-5: oklch(0.72 0.16 305);
+
+  --success: oklch(0.7 0.16 145);
+  --success-foreground: oklch(0.12 0 0);
+  --warning: oklch(0.8 0.14 85);
+  --warning-foreground: oklch(0.15 0 0);
+  --info: oklch(0.7 0.14 240);
+  --info-foreground: oklch(0.12 0 0);
+
+  --status-healthy: oklch(0.7 0.16 145);
+  --status-degraded: oklch(0.8 0.14 85);
+  --status-unhealthy: oklch(0.65 0.18 25);
+  --status-unknown: oklch(0.55 0 0);
+
+  --widget-health: oklch(0.7 0.16 145);
+  --widget-rss: oklch(0.75 0.16 50);
+  --widget-weather: oklch(0.7 0.14 200);
+  --widget-notes: oklch(0.8 0.14 85);
+  --widget-markdown: oklch(0.7 0.16 305);
+  --widget-api: oklch(0.7 0.14 190);
+  --widget-launcher: oklch(0.72 0.16 265);
+  --widget-iframe: oklch(0.65 0.14 160);
+
   --sidebar: oklch(0.14 0.012 265);
   --sidebar-foreground: oklch(0.95 0 0);
   --sidebar-primary: oklch(0.72 0.16 265);
@@ -183,6 +231,10 @@
   --duration-normal: 250ms;
   --duration-slow: 400ms;
 
+  --text-xs-small: 10px;
+  --text-xs-normal: 11px;
+  --text-sm: 12px;
+
   --breakpoint-xs: 20rem;
   --breakpoint-sm: 24rem;
   --breakpoint-md: 28rem;
@@ -229,6 +281,28 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
+  --color-status-healthy: var(--status-healthy);
+  --color-status-degraded: var(--status-degraded);
+  --color-status-unhealthy: var(--status-unhealthy);
+  --color-status-unknown: var(--status-unknown);
+
+  --color-widget-health: var(--widget-health);
+  --color-widget-rss: var(--widget-rss);
+  --color-widget-weather: var(--widget-weather);
+  --color-widget-notes: var(--widget-notes);
+  --color-widget-markdown: var(--widget-markdown);
+  --color-widget-api: var(--widget-api);
+  --color-widget-launcher: var(--widget-launcher);
+  --color-widget-iframe: var(--widget-iframe);
+
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -269,6 +343,10 @@
   --duration-fast: var(--duration-fast);
   --duration-normal: var(--duration-normal);
   --duration-slow: var(--duration-slow);
+
+  --text-xs-small: var(--text-xs-small);
+  --text-xs-normal: var(--text-xs-normal);
+  --text-sm: var(--text-sm);
 
   --breakpoint-xs: var(--breakpoint-xs);
   --breakpoint-sm: var(--breakpoint-sm);

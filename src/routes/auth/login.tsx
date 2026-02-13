@@ -4,63 +4,69 @@
  * Glassmorphism-styled login form with validation and error handling.
  * Route: /auth/login
  */
-import { useState } from 'react';
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { z } from 'zod';
-import { loginFn } from '@server/api/auth';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { useState } from 'react'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { z } from 'zod'
+import { loginFn } from '@server/api/auth'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+} from '@/components/ui/card'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Icon } from '@/components/ui/icon'
+import {
+  InformationCircleIcon,
+  ViewIcon,
+  ViewOffIcon,
+} from '@hugeicons/core-free-icons'
 
 export const Route = createFileRoute('/auth/login')({
   component: LoginPage,
   validateSearch: z.object({
     redirect: z.string().optional(),
   }),
-});
+})
 
 function LoginPage() {
-  const navigate = useNavigate();
-  const { redirect: redirectTo } = Route.useSearch();
+  const navigate = useNavigate()
+  const { redirect: redirectTo } = Route.useSearch()
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<
     Record<string, Array<string> | undefined>
-  >({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  >({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setFieldErrors({});
-    setIsSubmitting(true);
+    e.preventDefault()
+    setError(null)
+    setFieldErrors({})
+    setIsSubmitting(true)
 
     try {
-      const result = await loginFn({ data: { email, password } });
+      const result = await loginFn({ data: { email, password } })
 
       if (result.success) {
-        navigate({ to: redirectTo ?? '/' });
+        navigate({ to: redirectTo ?? '/' })
       } else if (result.error) {
-        setError(result.error.message);
+        setError(result.error.message)
         if (result.error.fieldErrors) {
-          setFieldErrors(result.error.fieldErrors);
+          setFieldErrors(result.error.fieldErrors)
         }
       }
     } catch {
-      setError('An unexpected error occurred');
+      setError('An unexpected error occurred')
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
   }
 
@@ -96,8 +102,8 @@ function LoginPage() {
                     x2="40"
                     y2="40"
                   >
-                    <stop stopColor="#6366f1" />
-                    <stop offset="1" stopColor="#8b5cf6" />
+                    <stop className="[stop-color:var(--primary)]" />
+                    <stop offset="1" className="[stop-color:var(--chart-5)]" />
                   </linearGradient>
                 </defs>
               </svg>
@@ -111,27 +117,7 @@ function LoginPage() {
             <form onSubmit={handleSubmit} className="grid gap-6">
               {error && (
                 <Alert variant="destructive">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 16 16"
-                    fill="none"
-                    className="h-4 w-4"
-                  >
-                    <circle
-                      cx="8"
-                      cy="8"
-                      r="7"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                    />
-                    <path
-                      d="M8 5v3.5M8 10.5v.5"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                  </svg>
+                  <Icon icon={InformationCircleIcon} size="sm" />
                   <AlertTitle>Error</AlertTitle>
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
@@ -149,7 +135,11 @@ function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isSubmitting}
-                  className={fieldErrors.email ? 'border-destructive focus-visible:ring-destructive' : ''}
+                  className={
+                    fieldErrors.email
+                      ? 'border-destructive focus-visible:ring-destructive'
+                      : ''
+                  }
                 />
                 {fieldErrors.email?.map((msg, i) => (
                   <p key={i} className="text-sm text-destructive">
@@ -172,7 +162,11 @@ function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={isSubmitting}
-                    className={fieldErrors.password ? 'border-destructive focus-visible:ring-destructive pr-10' : 'pr-10'}
+                    className={
+                      fieldErrors.password
+                        ? 'border-destructive focus-visible:ring-destructive pr-10'
+                        : 'pr-10'
+                    }
                   />
                   <Button
                     type="button"
@@ -180,38 +174,15 @@ function LoginPage() {
                     size="icon"
                     className="absolute right-0 top-0 h-full w-10 px-3 hover:bg-transparent text-muted-foreground"
                     onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-label={
+                      showPassword ? 'Hide password' : 'Show password'
+                    }
                     tabIndex={-1}
                   >
-                    {showPassword ? (
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
-                        <line x1="1" y1="1" x2="23" y2="23" />
-                      </svg>
-                    ) : (
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    )}
+                    <Icon
+                      icon={showPassword ? ViewOffIcon : ViewIcon}
+                      size="lg"
+                    />
                   </Button>
                 </div>
                 {fieldErrors.password?.map((msg, i) => (
@@ -227,7 +198,10 @@ function LoginPage() {
             </form>
             <div className="mt-4 text-center text-sm">
               Don&apos;t have an account?{' '}
-              <Link to="/auth/register" className="underline underline-offset-4">
+              <Link
+                to="/auth/register"
+                className="underline underline-offset-4"
+              >
                 Create one
               </Link>
             </div>
@@ -235,5 +209,5 @@ function LoginPage() {
         </Card>
       </div>
     </div>
-  );
+  )
 }

@@ -15,7 +15,7 @@ import {
   useWidgetVisibility,
   useObserveWidget,
 } from '@/hooks/use-widget-visibility'
-import 'react-grid-layout/css/styles.css'
+import { Button } from '@/components/ui/button'
 
 const DEBOUNCE_MS = 300
 const VIRTUALIZE_THRESHOLD = 10
@@ -121,33 +121,34 @@ function WidgetSlot({
             )}
             onClick={(e) => e.stopPropagation()}
           >
-            <span className="px-2 text-[10px] uppercase tracking-wide text-muted-foreground">
+            <span className="px-2 text-[length:var(--text-xs-small)] uppercase tracking-wide text-muted-foreground">
               Drag/Resize
             </span>
-            <button
-              type="button"
-              className="rounded px-2 py-1 text-xs hover:bg-muted transition-colors"
+            <Button
+              variant="ghost"
+              size="xs"
               onClick={onConfigure}
               aria-label="Configure widget"
             >
               Configure
-            </button>
-            <button
-              type="button"
-              className="rounded px-2 py-1 text-xs hover:bg-muted transition-colors"
+            </Button>
+            <Button
+              variant="ghost"
+              size="xs"
               onClick={onDuplicate}
               aria-label="Duplicate widget"
             >
               Duplicate
-            </button>
-            <button
-              type="button"
-              className="rounded px-2 py-1 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+            </Button>
+            <Button
+              variant="ghost"
+              size="xs"
               onClick={onDelete}
               aria-label="Delete widget"
+              className="text-destructive hover:bg-destructive/10"
             >
               Delete
-            </button>
+            </Button>
           </div>
         )}
         <div className="flex flex-col h-full">
@@ -155,7 +156,7 @@ function WidgetSlot({
             <span className="text-sm font-medium truncate">
               {widget.title ?? widget.type}
             </span>
-            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            <span className="text-[length:var(--text-xs-small)] uppercase tracking-wide text-muted-foreground">
               {widget.type}
             </span>
           </div>

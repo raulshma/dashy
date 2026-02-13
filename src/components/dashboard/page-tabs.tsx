@@ -4,7 +4,6 @@
  * Tab bar with drag-to-reorder, add/rename/delete functionality.
  * Uses @dnd-kit for drag and drop.
  */
-import { useState } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -22,7 +21,20 @@ import {
   horizontalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import {
+  Add01Icon,
+  Delete02Icon,
+  Edit02Icon,
+  MoreVerticalIcon,
+} from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Icon } from '@/components/ui/icon'
 import { cn } from '@/lib/utils'
 
 interface Page {
@@ -107,19 +119,7 @@ export function PageTabs({
         className="shrink-0 h-8 px-2 text-muted-foreground hover:text-foreground"
         aria-label="Add page"
       >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
+        <Icon icon={Add01Icon} size="sm" />
       </Button>
     </div>
   )
@@ -142,8 +142,6 @@ function PageTab({
   onDelete,
   canDelete,
 }: PageTabProps) {
-  const [showMenu, setShowMenu] = useState(false)
-
   const {
     attributes,
     listeners,
@@ -180,7 +178,7 @@ function PageTab({
         {...listeners}
       >
         {page.icon && <span className="text-base">{page.icon}</span>}
-        <span className="max-w-[120px] truncate">{page.name}</span>
+        <span className="max-w-[--spacing(30)] truncate">{page.name}</span>
         {page.widgetCount > 0 && (
           <span className="text-xs text-muted-foreground ml-1">
             ({page.widgetCount})
@@ -188,90 +186,32 @@ function PageTab({
         )}
       </button>
 
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation()
-          setShowMenu(!showMenu)
-        }}
-        onBlur={() => setShowMenu(false)}
-        className={cn(
-          'shrink-0 p-1 mr-1 rounded hover:bg-muted transition-opacity',
-          showMenu ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
-        )}
-        aria-label="Page options"
-      >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="12" cy="5" r="1" />
-          <circle cx="12" cy="12" r="1" />
-          <circle cx="12" cy="19" r="1" />
-        </svg>
-      </button>
-
-      {showMenu && (
-        <div className="absolute top-full right-0 mt-1 z-50 min-w-[120px] rounded-md border bg-popover p-1 shadow-md">
-          <button
-            type="button"
-            onMouseDown={(e) => {
-              e.preventDefault()
-              setShowMenu(false)
-              onRename()
-            }}
-            className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="mr-2"
-            >
-              <path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-            </svg>
-            Rename
-          </button>
-          {canDelete && (
-            <button
-              type="button"
-              onMouseDown={(e) => {
-                e.preventDefault()
-                setShowMenu(false)
-                onDelete()
-              }}
-              className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground text-destructive hover:text-destructive"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="mr-2"
-              >
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-              </svg>
-              Delete
-            </button>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          className={cn(
+            'shrink-0 p-1 mr-1 rounded hover:bg-muted transition-opacity',
+            'opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100',
           )}
-        </div>
-      )}
+          aria-label="Page options"
+        >
+          <Icon icon={MoreVerticalIcon} size="sm" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={onRename}>
+            <Icon icon={Edit02Icon} size="sm" className="mr-2" />
+            Rename
+          </DropdownMenuItem>
+          {canDelete && (
+            <DropdownMenuItem
+              onClick={onDelete}
+              className="text-destructive focus:text-destructive"
+            >
+              <Icon icon={Delete02Icon} size="sm" className="mr-2" />
+              Delete
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 }

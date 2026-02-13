@@ -320,7 +320,7 @@ export function WidgetConfigForm<TConfig extends WidgetConfigSchema>({
   if (fields.length === 0) {
     return (
       <GlassCard variant="solid" className={className}>
-        <div className="p-4 text-center text-sm text-white/60">
+        <div className="p-4 text-center text-sm text-muted-foreground">
           This widget has no configurable options.
         </div>
       </GlassCard>
@@ -330,7 +330,7 @@ export function WidgetConfigForm<TConfig extends WidgetConfigSchema>({
   return (
     <GlassCard variant="solid" className={className}>
       <div className="space-y-4 p-4">
-        <h3 className="text-sm font-medium text-white">
+        <h3 className="text-sm font-medium text-foreground">
           {definition.displayName} Settings
         </h3>
         <div className="space-y-4">{fields.map(renderField)}</div>

@@ -32,11 +32,9 @@ export function DebugPanel({
 
   return (
     <GlassCard className="fixed bottom-4 right-4 z-50 max-w-md overflow-hidden">
-      <div className="flex items-center justify-between border-b border-white/10 p-3">
+      <div className="flex items-center justify-between border-b border-border p-3">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-amber-400">
-            Debug Mode
-          </span>
+          <span className="text-sm font-semibold text-warning">Debug Mode</span>
           <Badge variant="outline" className="text-xs">
             Active
           </Badge>
@@ -54,32 +52,36 @@ export function DebugPanel({
       {isExpanded && (
         <div className="space-y-3 p-3 text-xs">
           <section>
-            <h4 className="mb-1 font-medium text-slate-400">Dashboard</h4>
+            <h4 className="mb-1 font-medium text-muted-foreground">
+              Dashboard
+            </h4>
             <div className="grid grid-cols-2 gap-1">
-              <span className="text-slate-500">ID:</span>
-              <code className="truncate font-mono text-slate-300">
+              <span className="text-muted-foreground">ID:</span>
+              <code className="truncate font-mono text-foreground">
                 {dashboardId}
               </code>
-              <span className="text-slate-500">Name:</span>
-              <span className="text-slate-300">{dashboardName}</span>
-              <span className="text-slate-500">Pages:</span>
-              <span className="text-slate-300">{pageCount}</span>
-              <span className="text-slate-500">Widgets:</span>
-              <span className="text-slate-300">{widgetCount}</span>
+              <span className="text-muted-foreground">Name:</span>
+              <span className="text-foreground">{dashboardName}</span>
+              <span className="text-muted-foreground">Pages:</span>
+              <span className="text-foreground">{pageCount}</span>
+              <span className="text-muted-foreground">Widgets:</span>
+              <span className="text-foreground">{widgetCount}</span>
             </div>
           </section>
 
           <section>
-            <h4 className="mb-1 font-medium text-slate-400">Performance</h4>
+            <h4 className="mb-1 font-medium text-muted-foreground">
+              Performance
+            </h4>
             <div className="grid grid-cols-2 gap-1">
-              <span className="text-slate-500">Page Load:</span>
-              <span className="text-slate-300">
+              <span className="text-muted-foreground">Page Load:</span>
+              <span className="text-foreground">
                 {formatMs(debugInfo.pageLoadTime)}
               </span>
               {debugInfo.memoryUsage && (
                 <>
-                  <span className="text-slate-500">Memory:</span>
-                  <span className="text-slate-300">
+                  <span className="text-muted-foreground">Memory:</span>
+                  <span className="text-foreground">
                     {formatBytes(debugInfo.memoryUsage.usedJSHeapSize)} /{' '}
                     {formatBytes(debugInfo.memoryUsage.jsHeapSizeLimit)}
                   </span>
@@ -89,31 +91,33 @@ export function DebugPanel({
           </section>
 
           <section>
-            <h4 className="mb-1 font-medium text-slate-400">WebSocket</h4>
+            <h4 className="mb-1 font-medium text-muted-foreground">
+              WebSocket
+            </h4>
             <div className="grid grid-cols-2 gap-1">
-              <span className="text-slate-500">Status:</span>
+              <span className="text-muted-foreground">Status:</span>
               <div className="flex items-center gap-1">
                 <span
                   className={`inline-block h-2 w-2 rounded-full ${
-                    debugInfo.wsConnected ? 'bg-green-400' : 'bg-red-400'
+                    debugInfo.wsConnected ? 'bg-success' : 'bg-destructive'
                   }`}
                 />
-                <span className="text-slate-300">
+                <span className="text-foreground">
                   {debugInfo.wsConnected ? 'Connected' : 'Disconnected'}
                 </span>
               </div>
               {debugInfo.wsLatency !== null && (
                 <>
-                  <span className="text-slate-500">Latency:</span>
-                  <span className="text-slate-300">
+                  <span className="text-muted-foreground">Latency:</span>
+                  <span className="text-foreground">
                     {debugInfo.wsLatency.toFixed(0)}ms
                   </span>
                 </>
               )}
               {debugInfo.realtimeClientId && (
                 <>
-                  <span className="text-slate-500">Client ID:</span>
-                  <code className="truncate font-mono text-slate-300">
+                  <span className="text-muted-foreground">Client ID:</span>
+                  <code className="truncate font-mono text-foreground">
                     {debugInfo.realtimeClientId.slice(0, 8)}...
                   </code>
                 </>
@@ -122,13 +126,13 @@ export function DebugPanel({
           </section>
 
           <section>
-            <h4 className="mb-1 font-medium text-slate-400">
+            <h4 className="mb-1 font-medium text-muted-foreground">
               Widgets ({debugInfo.widgets.size})
             </h4>
             <div className="max-h-32 overflow-y-auto">
               <table className="w-full">
-                <thead className="sticky top-0 bg-slate-900/90">
-                  <tr className="text-left text-slate-500">
+                <thead className="sticky top-0 bg-muted/90">
+                  <tr className="text-left text-muted-foreground">
                     <th className="pr-2">Type</th>
                     <th className="pr-2">ID</th>
                     <th className="pr-2">Config</th>
@@ -137,11 +141,11 @@ export function DebugPanel({
                 </thead>
                 <tbody>
                   {Array.from(debugInfo.widgets.values()).map((widget) => (
-                    <tr key={widget.id} className="text-slate-300">
+                    <tr key={widget.id} className="text-foreground">
                       <td className="pr-2 font-mono text-xs">
                         {widget.type.slice(0, 12)}
                       </td>
-                      <td className="pr-2 font-mono text-xs text-slate-500">
+                      <td className="pr-2 font-mono text-xs text-muted-foreground">
                         {widget.id.slice(0, 6)}...
                       </td>
                       <td className="pr-2 text-xs">
@@ -150,7 +154,9 @@ export function DebugPanel({
                       <td>
                         <span
                           className={`inline-block h-2 w-2 rounded-full ${
-                            widget.isVisible ? 'bg-green-400' : 'bg-slate-600'
+                            widget.isVisible
+                              ? 'bg-success'
+                              : 'bg-muted-foreground'
                           }`}
                         />
                       </td>
