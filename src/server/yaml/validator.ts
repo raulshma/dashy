@@ -25,7 +25,7 @@ export interface YamlValidationIssue {
 export interface YamlValidationResult {
   valid: boolean
   data?: DashboardYaml
-  issues: YamlValidationIssue[]
+  issues: Array<YamlValidationIssue>
 }
 
 type YamlErrorLike = {
@@ -66,8 +66,10 @@ function toParseIssue(
 /**
  * Validate dashboard YAML and return structured issues.
  */
-export function validateDashboardYaml(yamlContent: string): YamlValidationResult {
-  const issues: YamlValidationIssue[] = []
+export function validateDashboardYaml(
+  yamlContent: string,
+): YamlValidationResult {
+  const issues: Array<YamlValidationIssue> = []
 
   const document = parseDocument(yamlContent, {
     prettyErrors: true,
@@ -96,12 +98,16 @@ export function validateDashboardYaml(yamlContent: string): YamlValidationResult
 
   if (!parsed.success) {
     for (const issue of parsed.error.issues) {
+      const normalizedIssuePath = issue.path.filter(
+        (segment): segment is string | number => typeof segment !== 'symbol',
+      )
+
       issues.push({
         level: 'error',
         source: 'yaml-schema',
         code: issue.code,
         message: issue.message,
-        path: normalizePath(issue.path),
+        path: normalizePath(normalizedIssuePath),
       })
     }
 

@@ -9,8 +9,8 @@ import {
   deleteShareLinkFn,
   listShareLinksFn,
   updateShareLinkFn,
-  type ShareLinkDetail,
 } from '@server/api/share-links'
+import type { ShareLinkDetail } from '@server/api/share-links'
 import type { ApiResponse } from '@shared/types'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'

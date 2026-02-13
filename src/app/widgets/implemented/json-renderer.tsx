@@ -4,7 +4,14 @@ import type { Widget, WidgetRenderProps } from '@shared/contracts'
 import { GlassCard } from '@/components/ui/glass-card'
 
 const jsonValueSchema: z.ZodType<unknown> = z.lazy(() =>
-  z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(jsonValueSchema), z.record(z.string(), jsonValueSchema)]),
+  z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.null(),
+    z.array(jsonValueSchema),
+    z.record(z.string(), jsonValueSchema),
+  ]),
 )
 
 export const jsonRendererWidgetConfigSchema = z.object({
@@ -105,8 +112,8 @@ function JsonNode({
     )
   }
 
-  const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) =>
-    a.localeCompare(b),
+  const entries = Object.entries(value as Record<string, unknown>).sort(
+    ([a], [b]) => a.localeCompare(b),
   )
   const defaultOpen = depth < collapsedDepth
 
@@ -157,28 +164,29 @@ export function JsonRendererWidget({
   )
 }
 
-export const jsonRendererWidgetDefinition: Widget<typeof jsonRendererWidgetConfigSchema> =
-  {
-    type: 'json-renderer',
-    displayName: 'JSON Renderer',
-    description: 'Pretty-print and inspect JSON with collapsible objects/arrays',
-    icon: 'code',
-    category: 'custom',
-    configSchema: jsonRendererWidgetConfigSchema,
-    defaultConfig: {
-      data: {
-        status: 'ok',
-        service: 'dashy',
-        metrics: {
-          uptime: 99.95,
-          latencyMs: 42,
-          healthy: true,
-        },
+export const jsonRendererWidgetDefinition: Widget<
+  typeof jsonRendererWidgetConfigSchema
+> = {
+  type: 'json-renderer',
+  displayName: 'JSON Renderer',
+  description: 'Pretty-print and inspect JSON with collapsible objects/arrays',
+  icon: 'code',
+  category: 'custom',
+  configSchema: jsonRendererWidgetConfigSchema,
+  defaultConfig: {
+    data: {
+      status: 'ok',
+      service: 'dashy',
+      metrics: {
+        uptime: 99.95,
+        latencyMs: 42,
+        healthy: true,
       },
-      collapsedDepth: 1,
-      showLineNumbers: true,
     },
-    defaultSize: { w: 4, h: 3 },
-    minSize: { w: 2, h: 2 },
-    maxSize: { w: 8, h: 8 },
-  }
+    collapsedDepth: 1,
+    showLineNumbers: true,
+  },
+  defaultSize: { w: 4, h: 3 },
+  minSize: { w: 2, h: 2 },
+  maxSize: { w: 8, h: 8 },
+}

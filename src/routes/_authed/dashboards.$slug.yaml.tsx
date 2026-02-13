@@ -33,7 +33,13 @@ import { GlassCard } from '@/components/ui/glass-card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 
-type SyncStatus = 'loading' | 'synced' | 'editing' | 'saving' | 'conflict' | 'error'
+type SyncStatus =
+  | 'loading'
+  | 'synced'
+  | 'editing'
+  | 'saving'
+  | 'conflict'
+  | 'error'
 
 interface ValidationIssue {
   level: 'error' | 'warning'
@@ -69,9 +75,9 @@ function DashboardYamlEditorPage() {
   const [lastSyncedYaml, setLastSyncedYaml] = useState<string>('')
 
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('loading')
-  const [validationIssues, setValidationIssues] = useState<Array<ValidationIssue>>(
-    [],
-  )
+  const [validationIssues, setValidationIssues] = useState<
+    Array<ValidationIssue>
+  >([])
   const [previewDocument, setPreviewDocument] = useState<DashboardYaml | null>(
     null,
   )
@@ -145,7 +151,7 @@ function DashboardYamlEditorPage() {
       }
 
       setValidationIssues(result.data.issues as Array<ValidationIssue>)
-      setPreviewDocument((result.data.preview as DashboardYaml | undefined) ?? null)
+      setPreviewDocument(result.data.preview ?? null)
     } finally {
       setIsValidating(false)
     }
@@ -217,7 +223,7 @@ function DashboardYamlEditorPage() {
           name: string
           updatedAt: string
           yaml: string
-          warnings: string[]
+          warnings: Array<string>
         }>(
           await applyDashboardYamlFn({
             data: {
@@ -232,7 +238,9 @@ function DashboardYamlEditorPage() {
         if (!result.success || !result.data) {
           const isConflict =
             result.error?.code === 'ALREADY_EXISTS' &&
-            result.error.message.toLowerCase().includes('updated after yaml load')
+            result.error.message
+              .toLowerCase()
+              .includes('updated after yaml load')
 
           if (isConflict) {
             setHasConflict(true)
@@ -301,7 +309,10 @@ function DashboardYamlEditorPage() {
   return (
     <div className="flex h-[calc(100vh-var(--header-height,64px))] flex-col">
       {error && (
-        <Alert variant={hasConflict ? 'destructive' : 'default'} className="mb-3">
+        <Alert
+          variant={hasConflict ? 'destructive' : 'default'}
+          className="mb-3"
+        >
           <AlertTitle>{hasConflict ? 'Sync conflict' : 'Notice'}</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
@@ -426,7 +437,11 @@ function DashboardYamlEditorPage() {
                       <h2 className="text-sm font-semibold">Validation</h2>
                       <div className="flex items-center gap-2">
                         <Badge
-                          variant={validationSummary.errors > 0 ? 'destructive' : 'secondary'}
+                          variant={
+                            validationSummary.errors > 0
+                              ? 'destructive'
+                              : 'secondary'
+                          }
                           className="text-[11px]"
                         >
                           {validationSummary.errors} error
@@ -456,9 +471,7 @@ function DashboardYamlEditorPage() {
                                   : 'border-border/70 bg-background/70',
                               )}
                             >
-                              <p className="font-medium">
-                                {issue.message}
-                              </p>
+                              <p className="font-medium">{issue.message}</p>
                               <p className="text-[11px] text-muted-foreground">
                                 {issue.source}
                                 {issue.path ? ` · ${issue.path}` : ''}
@@ -483,8 +496,12 @@ function DashboardYamlEditorPage() {
                       <ScrollArea className="h-full pr-2">
                         <div className="space-y-3 text-sm">
                           <div>
-                            <p className="text-xs text-muted-foreground">Dashboard</p>
-                            <p className="font-medium">{previewDocument.dashboard.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Dashboard
+                            </p>
+                            <p className="font-medium">
+                              {previewDocument.dashboard.name}
+                            </p>
                             {previewDocument.dashboard.description && (
                               <p className="text-xs text-muted-foreground">
                                 {previewDocument.dashboard.description}
@@ -512,7 +529,9 @@ function DashboardYamlEditorPage() {
                                 className="rounded-lg border border-border/60 bg-background/70 p-2"
                               >
                                 <div className="flex items-center justify-between gap-2">
-                                  <p className="truncate text-sm font-medium">{page.name}</p>
+                                  <p className="truncate text-sm font-medium">
+                                    {page.name}
+                                  </p>
                                   <span className="text-[11px] text-muted-foreground">
                                     {page.widgets.length} widget
                                     {page.widgets.length === 1 ? '' : 's'}
@@ -520,15 +539,17 @@ function DashboardYamlEditorPage() {
                                 </div>
                                 {page.widgets.length > 0 && (
                                   <div className="mt-1 flex flex-wrap gap-1">
-                                    {page.widgets.slice(0, 8).map((widget, widgetIndex) => (
-                                      <Badge
-                                        key={`${widget.type}-${widgetIndex}`}
-                                        variant="ghost"
-                                        className="h-5 rounded-md px-1.5 text-[10px]"
-                                      >
-                                        {widget.title ?? widget.type}
-                                      </Badge>
-                                    ))}
+                                    {page.widgets
+                                      .slice(0, 8)
+                                      .map((widget, widgetIndex) => (
+                                        <Badge
+                                          key={`${widget.type}-${widgetIndex}`}
+                                          variant="ghost"
+                                          className="h-5 rounded-md px-1.5 text-[10px]"
+                                        >
+                                          {widget.title ?? widget.type}
+                                        </Badge>
+                                      ))}
                                     {page.widgets.length > 8 && (
                                       <span className="text-[10px] text-muted-foreground">
                                         +{page.widgets.length - 8} more

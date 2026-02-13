@@ -31,7 +31,7 @@ export interface RateLimitResult {
 }
 
 interface RateLimitEntry {
-  timestamps: number[]
+  timestamps: Array<number>
   lastAccess: number
 }
 
@@ -82,7 +82,7 @@ export class RateLimiter {
     const entry = this.store.get(key)
     const windowStart = timestamp - rateConfig.windowMs
 
-    let timestamps: number[]
+    let timestamps: Array<number>
 
     if (!entry) {
       timestamps = []

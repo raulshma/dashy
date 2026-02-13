@@ -4,20 +4,19 @@
  * Handles plugin discovery from filesystem, manifest validation,
  * dynamic loading, and lifecycle management.
  */
+import { createHash } from 'node:crypto'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { eq } from 'drizzle-orm'
 import { db } from '@server/db/connection'
 import { plugins, pluginStorage } from '@server/db/schema'
-import {
-  type PluginManifest,
-  type PluginId,
-  type PluginState,
-  type PluginInstallSource,
-  pluginManifestSchema,
-  validatePluginManifest,
+import { pluginManifestSchema, validatePluginManifest } from '@shared/contracts'
+import type {
+  PluginId,
+  PluginInstallSource,
+  PluginManifest,
+  PluginState,
 } from '@shared/contracts'
-import { createHash } from 'crypto'
-import { existsSync, readdirSync, readFileSync } from 'fs'
-import { join } from 'path'
 
 const PLUGINS_DIR = join(process.cwd(), 'plugins')
 const DASHY_VERSION = '1.0.0'
@@ -38,11 +37,11 @@ export interface LoadedPlugin {
 class PluginLoader {
   private loadedPlugins = new Map<PluginId, LoadedPlugin>()
 
-  async discoverPlugins(): Promise<PluginManifest[]> {
-    const discovered: PluginManifest[] = []
+  discoverPlugins(): Promise<Array<PluginManifest>> {
+    const discovered: Array<PluginManifest> = []
 
     if (!existsSync(PLUGINS_DIR)) {
-      return discovered
+      return Promise.resolve(discovered)
     }
 
     const entries = readdirSync(PLUGINS_DIR, { withFileTypes: true })
@@ -87,7 +86,7 @@ class PluginLoader {
       }
     }
 
-    return discovered
+    return Promise.resolve(discovered)
   }
 
   async installPlugin(
@@ -310,7 +309,7 @@ class PluginLoader {
     return this.loadedPlugins.get(pluginId)
   }
 
-  getAllLoadedPlugins(): LoadedPlugin[] {
+  getAllLoadedPlugins(): Array<LoadedPlugin> {
     return Array.from(this.loadedPlugins.values())
   }
 

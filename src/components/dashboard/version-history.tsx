@@ -9,6 +9,7 @@ import {
   listVersionsFn,
   restoreVersionFn,
 } from '@server/api/versions'
+import { Clock01Icon } from '@hugeicons/core-free-icons'
 import type { VersionDetail, VersionSummary } from '@server/api/versions'
 import type { DashboardSnapshot } from '@server/db/schema'
 import type { ApiResponse } from '@shared/types'
@@ -36,7 +37,6 @@ import {
 } from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
 import { Icon } from '@/components/ui/icon'
-import { Clock01Icon } from '@hugeicons/core-free-icons'
 
 interface VersionHistoryProps {
   dashboardId: string

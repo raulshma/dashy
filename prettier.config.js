@@ -13,7 +13,6 @@ const config = {
   endOfLine: 'lf',
   quoteProps: 'as-needed',
   jsxSingleQuote: false,
-};
+}
 
-export default config;
-
+export default config

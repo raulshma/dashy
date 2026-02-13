@@ -5,6 +5,13 @@
  * Provides deduplication, priority-based scheduling, and unified task management.
  */
 
+import { addHistoryEntry, performCheck } from './health'
+import { fetchRssFeed } from './rss'
+import { fetchWeatherByCoordinates, fetchWeatherByLocation } from './weather'
+import type { CheckConfig, HealthCheckResult } from './health'
+import type { FetchResult } from './rss'
+import type { WeatherData } from './weather'
+
 export type TaskPriority = 'high' | 'normal' | 'low'
 
 export type TaskStatus = 'pending' | 'running' | 'paused' | 'error' | 'stopped'
@@ -56,7 +63,7 @@ interface ScheduledTask extends TaskDefinition {
 }
 
 const tasks = new Map<string, ScheduledTask>()
-const dedupeGroups = new Map<string, string[]>()
+const dedupeGroups = new Map<string, Array<string>>()
 const DEFAULT_RETRY_DELAY_MS = 5000
 const DEFAULT_MAX_RETRIES = 3
 
@@ -291,7 +298,7 @@ export function getTaskState(taskId: string): TaskState | null {
   }
 }
 
-export function getAllTaskStates(): TaskState[] {
+export function getAllTaskStates(): Array<TaskState> {
   return Array.from(tasks.values()).map((task) => ({
     id: task.id,
     type: task.type,
@@ -306,11 +313,11 @@ export function getAllTaskStates(): TaskState[] {
   }))
 }
 
-export function getTasksByType(type: TaskType): TaskState[] {
+export function getTasksByType(type: TaskType): Array<TaskState> {
   return getAllTaskStates().filter((t) => t.type === type)
 }
 
-export function getActiveTasks(): TaskState[] {
+export function getActiveTasks(): Array<TaskState> {
   return getAllTaskStates().filter((t) => t.status !== 'stopped')
 }
 
@@ -396,19 +403,6 @@ export function updateTaskInterval(
 
   return true
 }
-
-import {
-  performCheck,
-  addHistoryEntry,
-  type CheckConfig,
-  type HealthCheckResult,
-} from './health'
-import { fetchRssFeed, type FetchResult } from './rss'
-import {
-  fetchWeatherByCoordinates,
-  fetchWeatherByLocation,
-  type WeatherData,
-} from './weather'
 
 export interface HealthCheckTaskOptions {
   widgetId: string

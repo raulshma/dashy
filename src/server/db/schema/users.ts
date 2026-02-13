@@ -3,8 +3,8 @@
  *
  * Core user account table for authentication and identity.
  */
-import { sql } from 'drizzle-orm';
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { sql } from 'drizzle-orm'
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 export const users = sqliteTable('users', {
   id: text('id')
@@ -22,9 +22,9 @@ export const users = sqliteTable('users', {
     .notNull()
     .default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`)
     .$onUpdate(() => new Date().toISOString()),
-});
+})
 
 /** Inferred insert type */
-export type InsertUser = typeof users.$inferInsert;
+export type InsertUser = typeof users.$inferInsert
 /** Inferred select type */
-export type SelectUser = typeof users.$inferSelect;
+export type SelectUser = typeof users.$inferSelect

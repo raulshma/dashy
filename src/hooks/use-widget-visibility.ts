@@ -17,7 +17,7 @@ export interface UseWidgetVisibilityOptions {
 }
 
 export function useWidgetVisibility(
-  widgetIds: string[],
+  widgetIds: Array<string>,
   options: UseWidgetVisibilityOptions = {},
 ): {
   visibilityMap: VisibilityMap

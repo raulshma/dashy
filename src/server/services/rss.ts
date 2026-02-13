@@ -13,7 +13,7 @@ export interface RssFeed {
   title: string
   description?: string
   link?: string
-  items: RssItem[]
+  items: Array<RssItem>
   fetchedAt: Date
   error?: string
 }
@@ -41,7 +41,7 @@ function parseRssFeed(xmlText: string): RssFeed {
   }
 
   const isAtom = doc.querySelector('feed') !== null
-  const items: RssItem[] = []
+  const items: Array<RssItem> = []
 
   if (isAtom) {
     const feed = doc.querySelector('feed')
@@ -200,7 +200,7 @@ export function clearFeedCache(url?: string): void {
   }
 }
 
-export function getCacheStats(): { size: number; urls: string[] } {
+export function getCacheStats(): { size: number; urls: Array<string> } {
   return {
     size: feedCache.size,
     urls: Array.from(feedCache.keys()),

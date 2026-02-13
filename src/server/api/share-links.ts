@@ -42,7 +42,7 @@ export interface PublicDashboardDetail {
       id: string
       type: string
       title: string | null
-      config: Record<string, unknown>
+      config: Record<string, {}>
       x: number
       y: number
       w: number
@@ -344,7 +344,7 @@ export const getPublicDashboardFn = publicGetFn
           id: string
           type: string
           title: string | null
-          config: Record<string, unknown>
+          config: Record<string, {}>
           x: number
           y: number
           w: number

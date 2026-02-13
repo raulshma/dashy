@@ -17,11 +17,12 @@ import { protectedGetFn, protectedPostFn } from './auth'
 import {
   ConflictError,
   ForbiddenError,
+  handleServerError,
   NotFoundError,
   ValidationError,
-  handleServerError,
 } from './utils'
 import type { ApiResponse } from '@shared/types'
+import type { DashboardYaml } from '@shared/schemas'
 
 const YAML_MAX_SIZE_BYTES = 500_000
 
@@ -53,7 +54,9 @@ async function resolveOwnedDashboardByIdentifier(
     .from(dashboards)
     .where(
       and(
-        isUuid ? eq(dashboards.id, identifier) : eq(dashboards.slug, identifier),
+        isUuid
+          ? eq(dashboards.id, identifier)
+          : eq(dashboards.slug, identifier),
         isNull(dashboards.deletedAt),
       ),
     )
@@ -115,7 +118,10 @@ export interface DashboardYamlExportPayload {
 export const exportDashboardYamlFn = protectedGetFn
   .inputValidator(exportYamlInputSchema)
   .handler(
-    async ({ data, context }): Promise<ApiResponse<DashboardYamlExportPayload>> => {
+    async ({
+      data,
+      context,
+    }): Promise<ApiResponse<DashboardYamlExportPayload>> => {
       try {
         const dashboard = await resolveOwnedDashboardByIdentifier(
           data.identifier,
@@ -154,7 +160,7 @@ const validateYamlInputSchema = z.object({
 export interface DashboardYamlValidationPayload {
   valid: boolean
   issues: ReturnType<typeof validateDashboardYaml>['issues']
-  preview?: ReturnType<typeof validateDashboardYaml>['data']
+  preview?: DashboardYaml
 }
 
 /**
@@ -162,24 +168,22 @@ export interface DashboardYamlValidationPayload {
  */
 export const validateDashboardYamlFn = protectedPostFn
   .inputValidator(validateYamlInputSchema)
-  .handler(
-    async ({ data }): Promise<ApiResponse<DashboardYamlValidationPayload>> => {
-      try {
-        const result = validateDashboardYaml(data.yamlContent)
+  .handler(({ data }): ApiResponse<DashboardYamlValidationPayload> => {
+    try {
+      const result = validateDashboardYaml(data.yamlContent)
 
-        return {
-          success: true,
-          data: {
-            valid: result.valid,
-            issues: result.issues,
-            preview: result.data,
-          },
-        }
-      } catch (error) {
-        return handleServerError(error)
+      return {
+        success: true,
+        data: {
+          valid: result.valid,
+          issues: result.issues,
+          preview: result.data,
+        },
       }
-    },
-  )
+    } catch (error) {
+      return handleServerError(error)
+    }
+  })
 
 const applyYamlInputSchema = z.object({
   dashboardId: z.string().min(1),
@@ -204,7 +208,7 @@ export interface ApplyDashboardYamlPayload {
   created: boolean
   pagesImported: number
   widgetsImported: number
-  warnings: string[]
+  warnings: Array<string>
 }
 
 /**
@@ -213,7 +217,10 @@ export interface ApplyDashboardYamlPayload {
 export const applyDashboardYamlFn = protectedPostFn
   .inputValidator(applyYamlInputSchema)
   .handler(
-    async ({ data, context }): Promise<ApiResponse<ApplyDashboardYamlPayload>> => {
+    async ({
+      data,
+      context,
+    }): Promise<ApiResponse<ApplyDashboardYamlPayload>> => {
       try {
         const ownedDashboard = await resolveOwnedDashboardById(
           data.dashboardId,

@@ -16,11 +16,11 @@ export type WidgetConfigSchema = Record<string, unknown>
  * Prefer this over manually specifying `WidgetDefinition<TConfig>`.
  */
 export type Widget<TSchema extends z.ZodTypeAny> = Omit<
-  WidgetDefinition<z.infer<TSchema>>,
+  WidgetDefinition<z.infer<TSchema> & WidgetConfigSchema>,
   'configSchema' | 'defaultConfig'
 > & {
   configSchema: TSchema
-  defaultConfig: z.infer<TSchema>
+  defaultConfig: z.infer<TSchema> & WidgetConfigSchema
 }
 
 /**

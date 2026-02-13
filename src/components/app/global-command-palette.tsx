@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { getDashboardFn, listDashboardsFn } from '@server/api/dashboards'
-import type { DashboardSummary } from '@server/api/dashboards'
 import {
   addWidgetFn,
   deleteWidgetFn,
   duplicateWidgetFn,
   updateWidgetConfigFn,
 } from '@server/api/widgets'
+import type { DashboardSummary } from '@server/api/dashboards'
 import { getAllWidgets, getWidget } from '@/app/widgets'
 import { useAuth } from '@/hooks/use-auth'
 import {
@@ -207,7 +207,6 @@ export function GlobalCommandPalette(): React.ReactElement {
               })
             })
           })
-
         })
 
         setSearchIndex(items)
@@ -412,7 +411,9 @@ export function GlobalCommandPalette(): React.ReactElement {
                     <CommandSeparator />
                     <CommandGroup heading="Dashboards">
                       {dashboardsLoading && dashboards.length === 0 ? (
-                        <CommandItem disabled>Loading dashboards...</CommandItem>
+                        <CommandItem disabled>
+                          Loading dashboards...
+                        </CommandItem>
                       ) : dashboards.length > 0 ? (
                         dashboards.map((dashboard) => (
                           <CommandItem
@@ -431,14 +432,18 @@ export function GlobalCommandPalette(): React.ReactElement {
                     <CommandSeparator />
                     <CommandGroup heading="Search Index">
                       {searchIndexLoading && searchIndex.length === 0 ? (
-                        <CommandItem disabled>Building search index...</CommandItem>
+                        <CommandItem disabled>
+                          Building search index...
+                        </CommandItem>
                       ) : searchIndex.length > 0 ? (
                         searchIndex.map((item) => {
                           if (item.kind === 'dashboard') {
                             return (
                               <CommandItem
                                 key={`idx-dashboard-${item.id}`}
-                                onSelect={() => goToDashboard(item.dashboardSlug)}
+                                onSelect={() =>
+                                  goToDashboard(item.dashboardSlug)
+                                }
                                 value={item.value}
                               >
                                 Dashboard: {item.dashboardName}
@@ -446,12 +451,19 @@ export function GlobalCommandPalette(): React.ReactElement {
                             )
                           }
 
-                          if (item.kind === 'page' && item.pageId && item.pageName) {
+                          if (
+                            item.kind === 'page' &&
+                            item.pageId &&
+                            item.pageName
+                          ) {
                             return (
                               <CommandItem
                                 key={`idx-page-${item.id}`}
                                 onSelect={() =>
-                                  goToDashboardPage(item.dashboardSlug, item.pageId)
+                                  goToDashboardPage(
+                                    item.dashboardSlug,
+                                    item.pageId!,
+                                  )
                                 }
                                 value={item.value}
                               >
@@ -465,7 +477,10 @@ export function GlobalCommandPalette(): React.ReactElement {
                               <CommandItem
                                 key={`idx-widget-${item.id}`}
                                 onSelect={() =>
-                                  goToDashboardPage(item.dashboardSlug, item.pageId)
+                                  goToDashboardPage(
+                                    item.dashboardSlug,
+                                    item.pageId!,
+                                  )
                                 }
                                 value={item.value}
                               >
@@ -478,7 +493,9 @@ export function GlobalCommandPalette(): React.ReactElement {
                           return null
                         })
                       ) : (
-                        <CommandItem disabled>No indexed items yet.</CommandItem>
+                        <CommandItem disabled>
+                          No indexed items yet.
+                        </CommandItem>
                       )}
                     </CommandGroup>
 
@@ -516,17 +533,22 @@ export function GlobalCommandPalette(): React.ReactElement {
                           {currentPageWidgets.map((widget) => (
                             <CommandItem
                               key={`remove-widget-${widget.id}`}
-                              onSelect={() => void handleDeleteWidget(widget.id)}
+                              onSelect={() =>
+                                void handleDeleteWidget(widget.id)
+                              }
                               value={`remove widget ${widget.widgetTitle ?? widget.widgetType} ${widget.id}`}
                             >
-                              Remove widget: {widget.widgetTitle ?? widget.widgetType}
+                              Remove widget:{' '}
+                              {widget.widgetTitle ?? widget.widgetType}
                             </CommandItem>
                           ))}
 
                           {currentPageWidgets.map((widget) => (
                             <CommandItem
                               key={`duplicate-widget-${widget.id}`}
-                              onSelect={() => void handleDuplicateWidget(widget.id)}
+                              onSelect={() =>
+                                void handleDuplicateWidget(widget.id)
+                              }
                               value={`duplicate widget ${widget.widgetTitle ?? widget.widgetType} ${widget.id}`}
                             >
                               Duplicate widget:{' '}
@@ -535,7 +557,9 @@ export function GlobalCommandPalette(): React.ReactElement {
                           ))}
 
                           {currentPageWidgets
-                            .filter((widget) => typeof widget.widgetType === 'string')
+                            .filter(
+                              (widget) => typeof widget.widgetType === 'string',
+                            )
                             .map((widget) => (
                               <CommandItem
                                 key={`configure-widget-${widget.id}`}

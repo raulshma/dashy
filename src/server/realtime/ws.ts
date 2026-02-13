@@ -8,8 +8,8 @@
  * - Defensive message validation and cleanup
  */
 import { defineWebSocketHandler } from 'nitro/h3'
-import type { RealtimeServerMessage } from '@shared/contracts'
 import { parseClientMessage } from './protocol'
+import type { RealtimeServerMessage } from '@shared/contracts'
 
 const HEARTBEAT_INTERVAL_MS = 30_000
 const STALE_CONNECTION_MS = 90_000
@@ -51,7 +51,10 @@ type PublishDashboardEventInput = {
 }
 
 function createConnectionId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+  if (
+    typeof crypto !== 'undefined' &&
+    typeof crypto.randomUUID === 'function'
+  ) {
     return crypto.randomUUID()
   }
 
@@ -89,11 +92,7 @@ function safelySend(peer: RealtimePeer, payload: RealtimeServerMessage): void {
   }
 }
 
-function sendError(
-  peer: RealtimePeer,
-  code: string,
-  message: string,
-): void {
+function sendError(peer: RealtimePeer, code: string, message: string): void {
   safelySend(peer, {
     type: 'error',
     code,
@@ -363,13 +362,21 @@ export const dashyRealtimeWebSocketHandler = defineWebSocketHandler({
   message(peer, message) {
     const connectionId = peerToConnectionId.get(peer as unknown as object)
     if (!connectionId) {
-      sendError(peer as unknown as RealtimePeer, 'UNKNOWN_CONNECTION', 'Connection not initialized')
+      sendError(
+        peer as unknown as RealtimePeer,
+        'UNKNOWN_CONNECTION',
+        'Connection not initialized',
+      )
       return
     }
 
     const connection = connections.get(connectionId)
     if (!connection) {
-      sendError(peer as unknown as RealtimePeer, 'UNKNOWN_CONNECTION', 'Connection not found')
+      sendError(
+        peer as unknown as RealtimePeer,
+        'UNKNOWN_CONNECTION',
+        'Connection not found',
+      )
       return
     }
 
@@ -377,13 +384,21 @@ export const dashyRealtimeWebSocketHandler = defineWebSocketHandler({
 
     const text = extractMessageText(message)
     if (!text) {
-      sendError(connection.peer, 'INVALID_MESSAGE', 'Message payload must be valid JSON text')
+      sendError(
+        connection.peer,
+        'INVALID_MESSAGE',
+        'Message payload must be valid JSON text',
+      )
       return
     }
 
     const parsed = parseClientMessage(text)
     if (!parsed) {
-      sendError(connection.peer, 'INVALID_MESSAGE', 'Unsupported message format')
+      sendError(
+        connection.peer,
+        'INVALID_MESSAGE',
+        'Unsupported message format',
+      )
       return
     }
 
@@ -420,4 +435,3 @@ export const dashyRealtimeWebSocketHandler = defineWebSocketHandler({
     cleanupConnection(peer as unknown as object)
   },
 })
-

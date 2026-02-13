@@ -1,13 +1,12 @@
 import { z } from 'zod'
-import { publicPostFn, handleServerError } from '@server/api/utils'
-import type { ApiResponse } from '@shared/types'
+import { handleServerError, publicPostFn } from '@server/api/utils'
 import {
   fetchWeatherByCoordinates,
   fetchWeatherByLocation,
   geocodeLocation,
-  type GeocodingResult,
-  type WeatherData,
 } from '@server/services/weather'
+import type { GeocodingResult, WeatherData } from '@server/services/weather'
+import type { ApiResponse } from '@shared/types'
 
 const weatherUnitsSchema = z.enum(['metric', 'imperial'])
 
@@ -88,12 +87,16 @@ export const getWeatherByCoordinatesFn = publicPostFn
   .inputValidator(weatherByCoordinatesSchema)
   .handler(async ({ data }): Promise<ApiResponse<WeatherResponse>> => {
     try {
-      const result = await fetchWeatherByCoordinates(data.latitude, data.longitude, {
-        units: data.units,
-        days: data.days,
-        ttlMs: data.ttlMs,
-        timeoutMs: data.timeoutMs,
-      })
+      const result = await fetchWeatherByCoordinates(
+        data.latitude,
+        data.longitude,
+        {
+          units: data.units,
+          days: data.days,
+          ttlMs: data.ttlMs,
+          timeoutMs: data.timeoutMs,
+        },
+      )
 
       if (!result.success) {
         return {

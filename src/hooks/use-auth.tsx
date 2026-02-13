@@ -10,61 +10,67 @@
  *     const { user, isAuthenticated, isLoading, logout } = useAuth()
  *   }
  */
-import { useState, useEffect, useCallback, createContext, useContext } from 'react';
-import type { SafeUser } from '@server/services/auth';
-import { getCurrentUserFn, logoutFn } from '@server/api/auth';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react'
+import { getCurrentUserFn, logoutFn } from '@server/api/auth'
+import type { SafeUser } from '@server/services/auth'
 
 // ─── Auth Context ──────────────────────────────
 
 interface AuthContextValue {
   /** The currently authenticated user, or null */
-  user: SafeUser | null;
+  user: SafeUser | null
   /** Whether auth state is still being loaded */
-  isLoading: boolean;
+  isLoading: boolean
   /** Whether the user is authenticated */
-  isAuthenticated: boolean;
+  isAuthenticated: boolean
   /** Log the user out and redirect to login */
-  logout: () => Promise<void>;
+  logout: () => Promise<void>
   /** Refresh the user state from the server */
-  refresh: () => Promise<void>;
+  refresh: () => Promise<void>
   /** Optimistically set/update the local user object */
-  setUser: (user: SafeUser | null) => void;
+  setUser: (user: SafeUser | null) => void
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+const AuthContext = createContext<AuthContextValue | null>(null)
 
 // ─── Provider ──────────────────────────────────
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<SafeUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<SafeUser | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   const refresh = useCallback(async () => {
     try {
-      setIsLoading(true);
-      const currentUser = await getCurrentUserFn();
-      setUser(currentUser);
+      setIsLoading(true)
+      const currentUser = await getCurrentUserFn()
+      setUser(currentUser)
     } catch {
-      setUser(null);
+      setUser(null)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, []);
+  }, [])
 
   const logout = useCallback(async () => {
     try {
-      await logoutFn();
+      await logoutFn()
     } catch {
       // logoutFn throws redirect — that's expected
     } finally {
-      setUser(null);
+      setUser(null)
     }
-  }, []);
+  }, [])
 
   // Fetch user on mount
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    refresh()
+  }, [refresh])
 
   return (
     <AuthContext.Provider
@@ -79,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     >
       {children}
     </AuthContext.Provider>
-  );
+  )
 }
 
 // ─── Hook ──────────────────────────────────────
@@ -90,9 +96,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
  * @throws If used outside of `<AuthProvider>`
  */
 export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext);
+  const ctx = useContext(AuthContext)
   if (!ctx) {
-    throw new Error('useAuth must be used within an <AuthProvider>');
+    throw new Error('useAuth must be used within an <AuthProvider>')
   }
-  return ctx;
+  return ctx
 }

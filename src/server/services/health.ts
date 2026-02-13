@@ -21,7 +21,7 @@ export interface HealthCheckResult {
 export interface HealthCheckConfig {
   url: string
   method?: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'OPTIONS'
-  expectedStatus?: number | number[]
+  expectedStatus?: number | Array<number>
   timeout?: number
   headers?: Record<string, unknown>
   body?: string
@@ -54,7 +54,7 @@ function generateId(): string {
 function determineStatus(
   statusCode: number | null,
   latencyMs: number | null,
-  expectedStatus: number | number[],
+  expectedStatus: number | Array<number>,
   error: string | null,
 ): HealthStatus {
   if (error) return 'unhealthy'
@@ -362,7 +362,7 @@ export function isPolling(widgetId: string): boolean {
   return activePollers.has(widgetId)
 }
 
-export function getActivePollers(): string[] {
+export function getActivePollers(): Array<string> {
   return Array.from(activePollers.keys())
 }
 

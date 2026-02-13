@@ -7,27 +7,22 @@
  *
  * WARNING: This script is destructive — it clears existing data first.
  */
-import { closeDatabase, db } from './connection';
-import {
-  dashboards,
-  pages,
-  users,
-  widgets,
-} from './schema/index';
+import { closeDatabase, db } from './connection'
+import { dashboards, pages, users, widgets } from './schema/index'
 
 /** Simple hash placeholder — in production, use bcrypt (see auth service) */
 const DEMO_PASSWORD_HASH =
-  '$2b$10$dummyhashfordevseeding000000000000000000000000000';
+  '$2b$10$dummyhashfordevseeding000000000000000000000000000'
 
 function seed() {
-  console.log('🌱 Seeding database...');
+  console.log('🌱 Seeding database...')
 
   try {
     // ── Clear existing data (order matters due to FK constraints) ──
-    db.delete(widgets).run();
-    db.delete(pages).run();
-    db.delete(dashboards).run();
-    db.delete(users).run();
+    db.delete(widgets).run()
+    db.delete(pages).run()
+    db.delete(dashboards).run()
+    db.delete(users).run()
 
     // ── Create test user ────────────────────────────
     const testUser = db
@@ -38,9 +33,9 @@ function seed() {
         displayName: 'Demo User',
       })
       .returning()
-      .get();
+      .get()
 
-    console.log(`  ✅ Created user: ${testUser.email} (${testUser.id})`);
+    console.log(`  ✅ Created user: ${testUser.email} (${testUser.id})`)
 
     // ── Create sample dashboard ─────────────────────
     const sampleDashboard = db
@@ -53,11 +48,11 @@ function seed() {
         isDefault: true,
       })
       .returning()
-      .get();
+      .get()
 
     console.log(
       `  ✅ Created dashboard: ${sampleDashboard.name} (${sampleDashboard.id})`,
-    );
+    )
 
     // ── Create sample pages ─────────────────────────
     const overviewPage = db
@@ -69,7 +64,7 @@ function seed() {
         layout: { columns: 12, rowHeight: 80, gap: 16 },
       })
       .returning()
-      .get();
+      .get()
 
     const servicesPage = db
       .insert(pages)
@@ -80,14 +75,23 @@ function seed() {
         layout: { columns: 12, rowHeight: 80, gap: 16 },
       })
       .returning()
-      .get();
+      .get()
 
     console.log(
       `  ✅ Created pages: ${overviewPage.name}, ${servicesPage.name}`,
-    );
+    )
 
     // ── Create sample widgets ───────────────────────
-    const widgetData = [
+    const widgetData: Array<{
+      pageId: string
+      type: string
+      title: string
+      x: number
+      y: number
+      w: number
+      h: number
+      config: Record<string, {}>
+    }> = [
       {
         pageId: overviewPage.id,
         type: 'weather',
@@ -194,11 +198,11 @@ function seed() {
           ],
         },
       },
-    ];
+    ]
 
-    db.insert(widgets).values(widgetData).run();
+    db.insert(widgets).values(widgetData).run()
 
-    console.log(`  ✅ Created ${widgetData.length} widgets`);
+    console.log(`  ✅ Created ${widgetData.length} widgets`)
 
     // ── Create second dashboard ─────────────────────
     db.insert(dashboards)
@@ -208,18 +212,18 @@ function seed() {
         slug: 'development',
         description: 'Dev tools and CI/CD monitoring',
       })
-      .run();
+      .run()
 
-    console.log('  ✅ Created secondary dashboard: Development');
+    console.log('  ✅ Created secondary dashboard: Development')
 
-    console.log('\n🎉 Seeding complete!');
-    console.log('   Login: demo@dashy.dev');
+    console.log('\n🎉 Seeding complete!')
+    console.log('   Login: demo@dashy.dev')
   } catch (error) {
-    console.error('❌ Seeding failed:', error);
-    process.exit(1);
+    console.error('❌ Seeding failed:', error)
+    process.exit(1)
   } finally {
-    closeDatabase();
+    closeDatabase()
   }
 }
 
-seed();
+seed()

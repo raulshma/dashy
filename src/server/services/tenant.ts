@@ -7,9 +7,9 @@
  * Current state: User-level isolation (each user has their own data).
  * Future: Organization-level isolation with team workspaces.
  */
-import { eq, and } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { db } from '@server/db/connection'
-import { tenants, tenantMemberships } from '@server/db/schema/tenants'
+import { tenantMemberships, tenants } from '@server/db/schema/tenants'
 import { dashboards } from '@server/db/schema/dashboards'
 import type {
   Tenant,

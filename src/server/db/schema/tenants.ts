@@ -21,7 +21,7 @@ export const tenants = sqliteTable('tenants', {
   maxDashboards: integer('max_dashboards').notNull().default(10),
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
   settings: text('settings', { mode: 'json' }).$type<{
-    allowedWidgetTypes?: string[]
+    allowedWidgetTypes?: Array<string>
     customBranding?: {
       primaryColor?: string
       logoUrl?: string

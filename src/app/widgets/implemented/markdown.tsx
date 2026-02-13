@@ -15,7 +15,7 @@ export type MarkdownWidgetConfig = z.infer<typeof markdownWidgetConfigSchema>
 export function MarkdownWidget({
   config,
 }: WidgetRenderProps<MarkdownWidgetConfig>) {
-  const content = config.content?.trim() ?? ''
+  const content = config.content.trim()
 
   if (!content) {
     return (
@@ -43,7 +43,9 @@ export function MarkdownWidget({
                   href={href}
                   {...props}
                   target={
-                    config.openLinksInNewTab && isExternal ? '_blank' : undefined
+                    config.openLinksInNewTab && isExternal
+                      ? '_blank'
+                      : undefined
                   }
                   rel={
                     config.openLinksInNewTab && isExternal
@@ -64,7 +66,9 @@ export function MarkdownWidget({
   )
 }
 
-export const markdownWidgetDefinition: Widget<typeof markdownWidgetConfigSchema> = {
+export const markdownWidgetDefinition: Widget<
+  typeof markdownWidgetConfigSchema
+> = {
   type: 'markdown',
   displayName: 'Markdown',
   description: 'Render rich markdown notes with secure sanitization',

@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
+import { Area, AreaChart, YAxis } from 'recharts'
+import { SettingsError02Icon } from '@hugeicons/core-free-icons'
+import {
+  getHealthHistoryFn,
+  startHealthPollingFn,
+  stopHealthPollingFn,
+} from '@server/api/health'
 import type { Widget, WidgetRenderProps } from '@shared/contracts'
+import type { HistoryResponse } from '@server/api/health'
+import type { HealthStatus } from '@server/services/health'
 import { GlassCard } from '@/components/ui/glass-card'
 import { Icon } from '@/components/ui/icon'
 import {
@@ -8,15 +17,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
-import { Area, AreaChart, YAxis } from 'recharts'
-import { SettingsError02Icon } from '@hugeicons/core-free-icons'
-import {
-  getHealthHistoryFn,
-  startHealthPollingFn,
-  stopHealthPollingFn,
-  type HistoryResponse,
-} from '@server/api/health'
-import type { HealthStatus } from '@server/services/health'
 
 export const healthCheckConfigSchema = z.object({
   name: z.string().min(1).default('My Service'),

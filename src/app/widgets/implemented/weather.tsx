@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { z } from 'zod'
 import { format } from 'date-fns'
-import type { Widget, WidgetRenderProps } from '@shared/contracts'
-import { GlassCard } from '@/components/ui/glass-card'
-import { Icon } from '@/components/ui/icon'
 import { Loading03Icon, SettingsError02Icon } from '@hugeicons/core-free-icons'
 import {
   getWeatherByCoordinatesFn,
   getWeatherByLocationFn,
 } from '@server/api/weather'
+import type { Widget, WidgetRenderProps } from '@shared/contracts'
 import type { WeatherData } from '@server/services/weather'
+import { GlassCard } from '@/components/ui/glass-card'
+import { Icon } from '@/components/ui/icon'
 
 export const weatherWidgetConfigSchema = z.object({
   locationMode: z.enum(['city', 'coordinates']).default('city'),

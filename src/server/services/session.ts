@@ -10,7 +10,7 @@
  *   const session = await useAppSession()
  *   await session.update({ userId: 'abc', email: 'user@example.com' })
  */
-import { useSession } from '@tanstack/react-start/server';
+import { useSession } from '@tanstack/react-start/server'
 
 // ─── Session Types ────────────────────────────────
 
@@ -19,11 +19,11 @@ import { useSession } from '@tanstack/react-start/server';
  */
 export interface SessionData {
   /** Authenticated user ID */
-  userId?: string;
+  userId?: string
   /** User email (cached for quick access) */
-  email?: string;
+  email?: string
   /** User display name (cached for UI) */
-  displayName?: string;
+  displayName?: string
 }
 
 // ─── Session Utilities ──────────────────────────
@@ -45,7 +45,7 @@ export function useAppSession() {
       sameSite: 'lax' as const,
       maxAge: 60 * 60 * 24 * 7, // 7 days
     },
-  });
+  })
 }
 
 /**
@@ -53,6 +53,6 @@ export function useAppSession() {
  * Returns null if no active session.
  */
 export async function getSessionUserId(): Promise<string | null> {
-  const session = await useAppSession();
-  return session.data.userId ?? null;
+  const session = await useAppSession()
+  return session.data.userId ?? null
 }

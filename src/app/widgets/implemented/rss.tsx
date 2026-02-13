@@ -1,16 +1,16 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
-import type { Widget, WidgetRenderProps } from '@shared/contracts'
-import { GlassCard } from '@/components/ui/glass-card'
-import { Icon } from '@/components/ui/icon'
 import {
   Globe02Icon,
   Loading03Icon,
   RefreshIcon,
 } from '@hugeicons/core-free-icons'
 import { fetchRssFeedFn } from '@server/api/rss'
-import type { RssItem, RssFeed } from '@server/services/rss'
 import { formatDistanceToNow } from 'date-fns'
+import type { Widget, WidgetRenderProps } from '@shared/contracts'
+import type { RssFeed, RssItem } from '@server/services/rss'
+import { GlassCard } from '@/components/ui/glass-card'
+import { Icon } from '@/components/ui/icon'
 
 export const rssWidgetConfigSchema = z.object({
   url: z.string().url(),

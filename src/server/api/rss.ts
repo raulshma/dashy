@@ -1,12 +1,11 @@
 import { z } from 'zod'
-import { publicPostFn } from '@server/api/utils'
-import { handleServerError } from '@server/api/utils'
+import { handleServerError, publicPostFn } from '@server/api/utils'
 import {
+  clearFeedCache,
   fetchRssFeed,
   getCachedFeed,
-  clearFeedCache,
-  type RssFeed,
 } from '@server/services/rss'
+import type { RssFeed } from '@server/services/rss'
 import type { ApiResponse } from '@shared/types'
 
 const fetchFeedSchema = z.object({
@@ -57,7 +56,7 @@ export const fetchRssFeedFn = publicPostFn
 
 export const getCachedRssFeedFn = publicPostFn
   .inputValidator(getCachedSchema)
-  .handler(async ({ data }): Promise<ApiResponse<RssFeedResponse>> => {
+  .handler(({ data }): ApiResponse<RssFeedResponse> => {
     try {
       const feed = getCachedFeed(data.url)
 
@@ -82,7 +81,7 @@ export const getCachedRssFeedFn = publicPostFn
 
 export const clearRssCacheFn = publicPostFn
   .inputValidator(clearCacheSchema)
-  .handler(async ({ data }): Promise<ApiResponse<{ cleared: boolean }>> => {
+  .handler(({ data }): ApiResponse<{ cleared: boolean }> => {
     try {
       clearFeedCache(data.url)
       return { success: true, data: { cleared: true } }

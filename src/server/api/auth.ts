@@ -243,7 +243,7 @@ export const loginFn = createServerFn({ method: 'POST' })
 export const logoutFn = createServerFn({ method: 'POST' }).handler(async () => {
   const session = await useAppSession()
   await session.clear()
-  // eslint-disable-next-line @typescript-eslint/only-throw-error
+
   throw redirect({ to: '/auth/login' as string })
 })
 

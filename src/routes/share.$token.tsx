@@ -7,13 +7,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import {
-  getPublicDashboardFn,
-  type PublicDashboardDetail,
-} from '@server/api/share-links'
+import { getPublicDashboardFn } from '@server/api/share-links'
+import type { PublicDashboardDetail } from '@server/api/share-links'
 
 import { getWidgetDefinition, WidgetRenderer } from '@/app/widgets'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { GlassCard } from '@/components/ui/glass-card'
 

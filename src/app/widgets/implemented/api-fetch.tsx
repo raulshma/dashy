@@ -1,8 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { z } from 'zod'
-import type { Widget, WidgetRenderProps } from '@shared/contracts'
-import { GlassCard } from '@/components/ui/glass-card'
-import { Icon } from '@/components/ui/icon'
 import {
   Globe02Icon,
   Loading03Icon,
@@ -10,7 +7,10 @@ import {
   SettingsError02Icon,
 } from '@hugeicons/core-free-icons'
 import { fetchApiDataFn } from '@server/api/api-fetch'
+import type { Widget, WidgetRenderProps } from '@shared/contracts'
 import type { ApiFetchDataResponse } from '@server/api/api-fetch'
+import { GlassCard } from '@/components/ui/glass-card'
+import { Icon } from '@/components/ui/icon'
 
 const apiMethodSchema = z.enum([
   'GET',
@@ -30,7 +30,12 @@ export const apiFetchWidgetConfigSchema = z
     body: z.string().default(''),
     timeoutMs: z.number().int().min(1000).max(20000).default(10000),
     refreshInterval: z.number().int().min(0).max(3600000).default(0),
-    maxResponseBytes: z.number().int().min(1024).max(1024 * 1024).default(65536),
+    maxResponseBytes: z
+      .number()
+      .int()
+      .min(1024)
+      .max(1024 * 1024)
+      .default(65536),
     allowInsecureHttp: z.boolean().default(false),
     allowPrivateNetworks: z.boolean().default(false),
     showHeaders: z.boolean().default(false),
@@ -54,7 +59,9 @@ function formatBody(response: ApiFetchResult | null): string {
   return response.bodyText
 }
 
-function sanitizeHeaders(headers: Record<string, string>): Record<string, string> {
+function sanitizeHeaders(
+  headers: Record<string, string>,
+): Record<string, string> {
   const cleaned: Record<string, string> = {}
   for (const [key, value] of Object.entries(headers)) {
     if (key.trim() && value.trim()) {
@@ -120,7 +127,10 @@ export function ApiFetchWidget({
     fetchData()
 
     if (config.refreshInterval > 0) {
-      intervalRef.current = window.setInterval(fetchData, config.refreshInterval)
+      intervalRef.current = window.setInterval(
+        fetchData,
+        config.refreshInterval,
+      )
     }
 
     return () => {
@@ -128,7 +138,6 @@ export function ApiFetchWidget({
         clearInterval(intervalRef.current)
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     config.url,
     config.method,
@@ -154,7 +163,9 @@ export function ApiFetchWidget({
     return (
       <GlassCard className="h-full p-4 flex flex-col items-center justify-center gap-2 text-muted-foreground">
         <Icon icon={SettingsError02Icon} size="xl" />
-        <p className="text-sm text-center">Configure API URL in widget settings</p>
+        <p className="text-sm text-center">
+          Configure API URL in widget settings
+        </p>
       </GlassCard>
     )
   }
@@ -244,7 +255,9 @@ export function ApiFetchWidget({
   )
 }
 
-export const apiFetchWidgetDefinition: Widget<typeof apiFetchWidgetConfigSchema> = {
+export const apiFetchWidgetDefinition: Widget<
+  typeof apiFetchWidgetConfigSchema
+> = {
   type: 'api-fetch',
   displayName: 'API Fetch',
   description: 'Fetch an HTTP API endpoint and inspect JSON/text responses',

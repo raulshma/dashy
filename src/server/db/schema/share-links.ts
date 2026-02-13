@@ -3,9 +3,9 @@
  *
  * Tokenized share links for dashboards with read-only or embed access.
  */
-import { sql } from 'drizzle-orm';
-import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import { dashboards } from './dashboards';
+import { sql } from 'drizzle-orm'
+import { sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { dashboards } from './dashboards'
 
 export const shareLinks = sqliteTable('share_links', {
   id: text('id')
@@ -32,9 +32,9 @@ export const shareLinks = sqliteTable('share_links', {
   createdAt: text('created_at')
     .notNull()
     .default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`),
-});
+})
 
 /** Inferred insert type */
-export type InsertShareLink = typeof shareLinks.$inferInsert;
+export type InsertShareLink = typeof shareLinks.$inferInsert
 /** Inferred select type */
-export type SelectShareLink = typeof shareLinks.$inferSelect;
+export type SelectShareLink = typeof shareLinks.$inferSelect

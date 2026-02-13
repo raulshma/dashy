@@ -1,16 +1,16 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { z } from 'zod'
+import {
+  Add01Icon,
+  Delete02Icon,
+  Folder01Icon,
+  Link02Icon,
+  Search01Icon,
+  Upload04Icon,
+} from '@hugeicons/core-free-icons'
 import type { Widget, WidgetRenderProps } from '@shared/contracts'
 import { GlassCard } from '@/components/ui/glass-card'
 import { Icon } from '@/components/ui/icon'
-import {
-  Link02Icon,
-  Add01Icon,
-  Search01Icon,
-  Folder01Icon,
-  Upload04Icon,
-  Delete02Icon,
-} from '@hugeicons/core-free-icons'
 
 const MAX_ICON_FILE_BYTES = 128 * 1024
 const ALLOWED_ICON_MIME_TYPES = new Set([
@@ -183,7 +183,9 @@ export function AppLauncherWidget({
   const [search, setSearch] = useState('')
   const [uploadMessage, setUploadMessage] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
-  const [pendingBookmarkId, setPendingBookmarkId] = useState<string | null>(null)
+  const [pendingBookmarkId, setPendingBookmarkId] = useState<string | null>(
+    null,
+  )
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
     () => new Set(config.groups.filter((g) => g.collapsed).map((g) => g.id)),
   )
@@ -197,7 +199,7 @@ export function AppLauncherWidget({
   }, [config.bookmarks, search])
 
   const groupedBookmarks = useMemo(() => {
-    const groups = new Map<string | undefined, Bookmark[]>()
+    const groups = new Map<string | undefined, Array<Bookmark>>()
     for (const bookmark of filteredBookmarks) {
       const groupId = bookmark.groupId
       if (!groups.has(groupId)) {
@@ -217,7 +219,10 @@ export function AppLauncherWidget({
     window.open(bookmark.url, '_blank', 'noopener,noreferrer')
   }
 
-  const handleIconUploadForBookmark = async (file: File, bookmarkId: string) => {
+  const handleIconUploadForBookmark = async (
+    file: File,
+    bookmarkId: string,
+  ) => {
     setUploadMessage(null)
     setUploadError(null)
 
@@ -240,7 +245,9 @@ export function AppLauncherWidget({
 
       onConfigChange?.({
         bookmarks: config.bookmarks.map((bookmark) =>
-          bookmark.id === bookmarkId ? { ...bookmark, icon: dataUrl } : bookmark,
+          bookmark.id === bookmarkId
+            ? { ...bookmark, icon: dataUrl }
+            : bookmark,
         ),
       })
 
@@ -383,7 +390,9 @@ export function AppLauncherWidget({
                         setPendingBookmarkId(bookmark.id)
                         iconInputRef.current?.click()
                       }}
-                      onClearIcon={() => handleClearIconForBookmark(bookmark.id)}
+                      onClearIcon={() =>
+                        handleClearIconForBookmark(bookmark.id)
+                      }
                     />
                   ))}
                 </div>
@@ -403,21 +412,22 @@ export function AppLauncherWidget({
   )
 }
 
-export const appLauncherWidgetDefinition: Widget<typeof appLauncherConfigSchema> =
-  {
-    type: 'app-launcher',
-    displayName: 'App Launcher',
-    description: 'Quick access grid of bookmarks and links',
-    icon: 'link',
-    category: 'productivity',
-    configSchema: appLauncherConfigSchema,
-    defaultConfig: {
-      bookmarks: [],
-      groups: [],
-      showSearch: true,
-      columns: 4,
-    },
-    defaultSize: { w: 3, h: 2 },
-    minSize: { w: 2, h: 1 },
-    maxSize: { w: 6, h: 4 },
-  }
+export const appLauncherWidgetDefinition: Widget<
+  typeof appLauncherConfigSchema
+> = {
+  type: 'app-launcher',
+  displayName: 'App Launcher',
+  description: 'Quick access grid of bookmarks and links',
+  icon: 'link',
+  category: 'productivity',
+  configSchema: appLauncherConfigSchema,
+  defaultConfig: {
+    bookmarks: [],
+    groups: [],
+    showSearch: true,
+    columns: 4,
+  },
+  defaultSize: { w: 3, h: 2 },
+  minSize: { w: 2, h: 1 },
+  maxSize: { w: 6, h: 4 },
+}

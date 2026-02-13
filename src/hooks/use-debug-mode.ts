@@ -30,13 +30,9 @@ export interface DebugInfo {
   } | null
 }
 
-interface DebugSearch {
-  debug?: string
-}
-
 export function useDebugMode() {
-  const search = useSearch({ strict: false }) as DebugSearch
-  const enabled = search.debug === 'true'
+  const search = useSearch({ strict: false })
+  const enabled = (search as { debug?: string }).debug === 'true'
   const pageLoadTime = useRef(performance.now())
   const [wsConnected, setWsConnected] = useState(false)
   const [wsLatency, setWsLatency] = useState<number | null>(null)

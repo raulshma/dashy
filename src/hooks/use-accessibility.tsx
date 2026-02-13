@@ -4,7 +4,7 @@ function useAnnounce() {
   const [announcement, setAnnouncement] = React.useState('')
 
   const announce = React.useCallback(
-    (message: string, politeness: 'polite' | 'assertive' = 'polite') => {
+    (message: string, _politeness: 'polite' | 'assertive' = 'polite') => {
       setAnnouncement('')
       requestAnimationFrame(() => {
         setAnnouncement(message)

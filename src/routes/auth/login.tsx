@@ -8,6 +8,11 @@ import { useState } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { z } from 'zod'
 import { loginFn } from '@server/api/auth'
+import {
+  InformationCircleIcon,
+  ViewIcon,
+  ViewOffIcon,
+} from '@hugeicons/core-free-icons'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -20,11 +25,6 @@ import {
 } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Icon } from '@/components/ui/icon'
-import {
-  InformationCircleIcon,
-  ViewIcon,
-  ViewOffIcon,
-} from '@hugeicons/core-free-icons'
 
 export const Route = createFileRoute('/auth/login')({
   component: LoginPage,

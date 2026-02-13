@@ -93,7 +93,7 @@ export const listTemplatesFn = protectedGetFn
 
       const total = Number(countResult[0]?.count ?? 0)
 
-      const items: TemplateSummary[] = rows.map((row) => ({
+      const items: Array<TemplateSummary> = rows.map((row) => ({
         id: row.id,
         name: row.name,
         description: row.description,
@@ -255,7 +255,7 @@ export const saveDashboardAsTemplateFn = protectedPostFn
         y: number
         w: number
         h: number
-        config: Record<string, unknown>
+        config: Record<string, {}>
       }> = []
 
       if (pageIds.length > 0) {

@@ -14,11 +14,8 @@
  *     .handler(async ({ data, context }) => { ... })
  */
 import { createServerFn } from '@tanstack/react-start'
-import {
-  createErrorResponse,
-  type ApiResponse,
-  type ErrorCode,
-} from '@shared/types'
+import { createErrorResponse } from '@shared/types'
+import type { ApiResponse, ErrorCode } from '@shared/types'
 
 // ─── Custom Error Classes ──────────────────────────
 
@@ -29,14 +26,14 @@ import {
 export class AppError extends Error {
   public readonly code: ErrorCode
   public readonly statusCode: number
-  public readonly fieldErrors?: Record<string, string[]>
+  public readonly fieldErrors?: Record<string, Array<string>>
 
   constructor(
     code: ErrorCode,
     message: string,
     options?: {
       statusCode?: number
-      fieldErrors?: Record<string, string[]>
+      fieldErrors?: Record<string, Array<string>>
       cause?: unknown
     },
   ) {
@@ -62,7 +59,7 @@ export class NotFoundError extends AppError {
 
 /** Validation error (400) */
 export class ValidationError extends AppError {
-  constructor(message: string, fieldErrors?: Record<string, string[]>) {
+  constructor(message: string, fieldErrors?: Record<string, Array<string>>) {
     super('VALIDATION_ERROR', message, {
       statusCode: 400,
       fieldErrors,
@@ -124,9 +121,9 @@ export function handleServerError(error: unknown): ApiResponse<never> {
     'issues' in error
   ) {
     const zodError = error as Error & {
-      issues: Array<{ path: (string | number)[]; message: string }>
+      issues: Array<{ path: Array<string | number>; message: string }>
     }
-    const fieldErrors: Record<string, string[]> = {}
+    const fieldErrors: Record<string, Array<string>> = {}
 
     for (const issue of zodError.issues) {
       const field = issue.path.join('.')
@@ -142,7 +139,7 @@ export function handleServerError(error: unknown): ApiResponse<never> {
   }
 
   // Unknown errors — log and return generic message
-  // eslint-disable-next-line no-console
+
   console.error('[API Error]', error)
 
   return createErrorResponse(

@@ -11,9 +11,9 @@ import { dashboards, pages, widgets } from '@server/db/schema'
 import { protectedPostFn } from '@server/api/auth'
 import { publishDashboardEvent } from '@server/realtime/ws'
 import {
+  ForbiddenError,
   handleServerError,
   NotFoundError,
-  ForbiddenError,
   ValidationError,
 } from '@server/api/utils'
 
@@ -452,10 +452,7 @@ export const duplicateWidgetFn = protectedPostFn
       const sourceWidget = await getOwnedWidget(data.id, userId)
 
       const maxX = Math.max(0, 12 - sourceWidget.w)
-      const nextX = Math.min(
-        maxX,
-        Math.max(0, sourceWidget.x + data.offsetX),
-      )
+      const nextX = Math.min(maxX, Math.max(0, sourceWidget.x + data.offsetX))
       const nextY = Math.max(0, sourceWidget.y + data.offsetY)
 
       const duplicatedTitle = sourceWidget.title

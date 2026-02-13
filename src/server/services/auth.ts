@@ -7,8 +7,8 @@
  * Usage:
  *   import { hashPassword, verifyPassword, sanitizeUser } from '@server/services/auth'
  */
-import bcrypt from 'bcryptjs';
-import type { SelectUser } from '@server/db/schema';
+import bcrypt from 'bcryptjs'
+import type { SelectUser } from '@server/db/schema'
 
 // ─── Configuration ────────────────────────────────
 
@@ -17,7 +17,7 @@ import type { SelectUser } from '@server/db/schema';
  * 12 is a good balance between security and performance.
  * Each increment roughly doubles the computation time.
  */
-const SALT_ROUNDS = 12;
+const SALT_ROUNDS = 12
 
 // ─── Password Hashing ────────────────────────────
 
@@ -27,8 +27,8 @@ const SALT_ROUNDS = 12;
  * @returns The bcrypt hash string
  */
 export async function hashPassword(password: string): Promise<string> {
-  const salt = await bcrypt.genSalt(SALT_ROUNDS);
-  return bcrypt.hash(password, salt);
+  const salt = await bcrypt.genSalt(SALT_ROUNDS)
+  return bcrypt.hash(password, salt)
 }
 
 /**
@@ -41,7 +41,7 @@ export async function verifyPassword(
   password: string,
   hash: string,
 ): Promise<boolean> {
-  return bcrypt.compare(password, hash);
+  return bcrypt.compare(password, hash)
 }
 
 // ─── User Sanitization ──────────────────────────
@@ -51,13 +51,13 @@ export async function verifyPassword(
  * Never includes `passwordHash` or other sensitive fields.
  */
 export interface SafeUser {
-  id: string;
-  email: string;
-  displayName: string;
-  avatarUrl: string | null;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  email: string
+  displayName: string
+  avatarUrl: string | null
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 /**
@@ -73,5 +73,5 @@ export function sanitizeUser(user: SelectUser): SafeUser {
     isActive: user.isActive,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
-  };
+  }
 }

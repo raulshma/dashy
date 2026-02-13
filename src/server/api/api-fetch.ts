@@ -1,7 +1,10 @@
 import { z } from 'zod'
 import { handleServerError, publicPostFn } from '@server/api/utils'
 import { fetchApiData } from '@server/services/api-fetch'
-import type { ApiFetchMethod, ApiFetchResponse } from '@server/services/api-fetch'
+import type {
+  ApiFetchMethod,
+  ApiFetchResponse,
+} from '@server/services/api-fetch'
 
 const methodSchema = z.enum([
   'GET',
@@ -20,7 +23,12 @@ const fetchApiDataSchema = z
     headers: z.record(z.string().max(100), z.string().max(2000)).optional(),
     body: z.string().max(20000).optional(),
     timeoutMs: z.number().int().min(1000).max(20000).optional(),
-    maxResponseBytes: z.number().int().min(1024).max(1024 * 1024).optional(),
+    maxResponseBytes: z
+      .number()
+      .int()
+      .min(1024)
+      .max(1024 * 1024)
+      .optional(),
     allowInsecureHttp: z.boolean().optional(),
     allowPrivateNetworks: z.boolean().optional(),
   })

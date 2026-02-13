@@ -68,7 +68,7 @@ export const addWidgetSchema = z.object({
   y: z.number().int().min(0),
   w: z.number().int().min(1),
   h: z.number().int().min(1),
-  config: z.record(z.string(), z.unknown()).default({}),
+  config: z.record(z.string(), z.custom<{}>(() => true)).default({}),
 })
 
 /**

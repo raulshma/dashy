@@ -8,6 +8,10 @@ import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { logoutFn, updateAccountFn } from '@server/api/auth'
 
+import {
+  CheckmarkCircle02Icon,
+  InformationCircleIcon,
+} from '@hugeicons/core-free-icons'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -20,10 +24,6 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import {
-  CheckmarkCircle02Icon,
-  InformationCircleIcon,
-} from '@hugeicons/core-free-icons'
 import { Icon } from '@/components/ui/icon'
 
 export const Route = createFileRoute('/_authed/settings')({

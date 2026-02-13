@@ -23,7 +23,7 @@ export const yamlWidgetSchema = z
     y: z.number().int().min(0),
     w: z.number().int().min(1).max(12),
     h: z.number().int().min(1).max(12),
-    config: z.record(z.string(), z.unknown()).default({}),
+    config: z.record(z.string(), z.custom<{}>(() => true)).default({}),
   })
   .strict()
 

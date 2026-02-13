@@ -7,8 +7,12 @@
 import { and, count, eq, isNull } from 'drizzle-orm'
 import { db } from '@server/db/connection'
 import { dashboards, pages, widgets } from '@server/db/schema'
-import { ValidationError, NotFoundError, ForbiddenError } from '@server/api/utils'
-import { generateSlug } from '@server/api/utils'
+import {
+  ForbiddenError,
+  generateSlug,
+  NotFoundError,
+  ValidationError,
+} from '@server/api/utils'
 import { validateDashboardYaml } from './validator'
 
 export interface ImportDashboardFromYamlOptions {
@@ -24,13 +28,10 @@ export interface ImportDashboardFromYamlResult {
   created: boolean
   pagesImported: number
   widgetsImported: number
-  warnings: string[]
+  warnings: Array<string>
 }
 
-async function getDashboardOwnedByUser(
-  dashboardId: string,
-  userId: string,
-) {
+async function getDashboardOwnedByUser(dashboardId: string, userId: string) {
   const [dashboard] = await db
     .select()
     .from(dashboards)
@@ -59,7 +60,10 @@ async function ensureUniqueSlug(baseSlug: string, excludeDashboardId?: string) {
       .where(eq(dashboards.slug, candidate))
       .limit(1)
 
-    if (!existing || (excludeDashboardId && existing.id === excludeDashboardId)) {
+    if (
+      !existing ||
+      (excludeDashboardId && existing.id === excludeDashboardId)
+    ) {
       return candidate
     }
 
@@ -73,14 +77,11 @@ async function ensureUniqueSlug(baseSlug: string, excludeDashboardId?: string) {
 
 function createFieldErrorsFromValidationIssues(
   issues: Array<{ source: string; message: string; path?: string }>,
-): Record<string, string[]> {
-  const fieldErrors: Record<string, string[]> = {}
+): Record<string, Array<string>> {
+  const fieldErrors: Record<string, Array<string>> = {}
 
   for (const issue of issues) {
-    const key =
-      issue.source === 'yaml-schema'
-        ? issue.path ?? 'root'
-        : 'yaml'
+    const key = issue.source === 'yaml-schema' ? (issue.path ?? 'root') : 'yaml'
 
     if (!fieldErrors[key]) {
       fieldErrors[key] = []

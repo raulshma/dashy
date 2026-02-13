@@ -13,9 +13,9 @@ import {
   listCategoriesFn,
   listTemplatesFn,
 } from '@server/api/templates'
+import { toast } from 'sonner'
 import type { TemplateDetail, TemplateSummary } from '@server/api/templates'
 import type { ApiResponse } from '@shared/types'
-import { toast } from 'sonner'
 
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -61,8 +61,8 @@ export const Route = createFileRoute('/_authed/templates')({
 function TemplatesPage() {
   const navigate = useNavigate()
 
-  const [templates, setTemplates] = useState<TemplateSummary[]>([])
-  const [categories, setCategories] = useState<string[]>([])
+  const [templates, setTemplates] = useState<Array<TemplateSummary>>([])
+  const [categories, setCategories] = useState<Array<string>>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -91,7 +91,7 @@ function TemplatesPage() {
 
     try {
       const result = asApiResponse<{
-        items: TemplateSummary[]
+        items: Array<TemplateSummary>
         total: number
       }>(
         await listTemplatesFn({
@@ -120,7 +120,7 @@ function TemplatesPage() {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const result = asApiResponse<string[]>(
+      const result = asApiResponse<Array<string>>(
         await listCategoriesFn({ data: {} }),
       )
       if (result.success && result.data) {

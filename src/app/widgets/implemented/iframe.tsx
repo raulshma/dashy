@@ -1,7 +1,8 @@
 import { z } from 'zod'
 import type { Widget, WidgetRenderProps } from '@shared/contracts'
+import { buttonVariants } from '@/components/ui/button'
 import { GlassCard } from '@/components/ui/glass-card'
-import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 export const iframeWidgetConfigSchema = z.object({
   url: z.string().url().default('https://example.com'),
@@ -84,15 +85,17 @@ export function IframeWidget({
             Embedded page
           </p>
           {resolved.url && (
-            <Button asChild size="sm" variant="ghost" className="h-7 text-xs">
-              <a
-                href={resolved.url}
-                target="_blank"
-                rel="noopener noreferrer nofollow"
-              >
-                Open
-              </a>
-            </Button>
+            <a
+              href={resolved.url}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              className={cn(
+                buttonVariants({ size: 'sm', variant: 'ghost' }),
+                'h-7 text-xs',
+              )}
+            >
+              Open
+            </a>
           )}
         </div>
       )}

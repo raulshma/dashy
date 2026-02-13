@@ -17,11 +17,11 @@ import * as schema from './schema/index'
 
 interface DatabaseSchemaValidationResult {
   ok: boolean
-  missingTables: string[]
+  missingTables: Array<string>
   missingColumns: Array<{ table: string; column: string }>
 }
 
-const expectedSchema: Record<string, string[]> = {
+const expectedSchema: Record<string, Array<string>> = {
   users: [
     'id',
     'email',
@@ -190,7 +190,7 @@ export function validateDatabaseSchema(): DatabaseSchemaValidationResult {
     .all() as Array<{ name: string }>
 
   const existingTables = new Set(tableRows.map((row) => row.name))
-  const missingTables: string[] = []
+  const missingTables: Array<string> = []
   const missingColumns: Array<{ table: string; column: string }> = []
 
   for (const [table, expectedColumns] of Object.entries(expectedSchema)) {

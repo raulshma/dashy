@@ -12,8 +12,8 @@ import { cn } from '@/lib/utils'
 import { GlassCard } from '@/components/ui/glass-card'
 import { useIsMobile } from '@/hooks/use-responsive'
 import {
-  useWidgetVisibility,
   useObserveWidget,
+  useWidgetVisibility,
 } from '@/hooks/use-widget-visibility'
 import { Button } from '@/components/ui/button'
 

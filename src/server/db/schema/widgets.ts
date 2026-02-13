@@ -4,9 +4,9 @@
  * Individual widget instances placed on pages.
  * Stores widget type, grid position, size, and JSON config.
  */
-import { sql } from 'drizzle-orm';
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import { pages } from './pages';
+import { sql } from 'drizzle-orm'
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { pages } from './pages'
 
 export const widgets = sqliteTable('widgets', {
   id: text('id')
@@ -30,7 +30,7 @@ export const widgets = sqliteTable('widgets', {
   /** Widget-specific configuration (JSON) */
   config: text('config', { mode: 'json' })
     .notNull()
-    .$type<Record<string, unknown>>()
+    .$type<Record<string, {}>>()
     .default({}),
   createdAt: text('created_at')
     .notNull()
@@ -39,9 +39,9 @@ export const widgets = sqliteTable('widgets', {
     .notNull()
     .default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`)
     .$onUpdate(() => new Date().toISOString()),
-});
+})
 
 /** Inferred insert type */
-export type InsertWidget = typeof widgets.$inferInsert;
+export type InsertWidget = typeof widgets.$inferInsert
 /** Inferred select type */
-export type SelectWidget = typeof widgets.$inferSelect;
+export type SelectWidget = typeof widgets.$inferSelect

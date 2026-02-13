@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { useEditor, EditorContent } from '@tiptap/react'
+import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { z } from 'zod'
 import type { Widget, WidgetRenderProps } from '@shared/contracts'
@@ -49,7 +49,7 @@ export function NotesWidget({
   onConfigChange,
 }: WidgetRenderProps<NotesWidgetConfig>): React.ReactElement {
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const stickyTop = Math.max(0, Math.min(160, config.stickyTop ?? 16))
+  const stickyTop = Math.max(0, Math.min(160, config.stickyTop))
 
   const editor = useEditor({
     extensions: [StarterKit],
@@ -137,7 +137,9 @@ export function NotesWidget({
           <ToolbarButton
             label="H2"
             active={editor?.isActive('heading', { level: 2 })}
-            onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
+            onClick={() =>
+              editor?.chain().focus().toggleHeading({ level: 2 }).run()
+            }
             disabled={!editor || !isEditing}
           />
           <ToolbarButton
@@ -163,9 +165,7 @@ export function NotesWidget({
             <ToolbarButton
               label={config.stickyMode ? '📌 Pinned' : '📍 Pin'}
               active={config.stickyMode}
-              onClick={() =>
-                onConfigChange({ stickyMode: !config.stickyMode })
-              }
+              onClick={() => onConfigChange({ stickyMode: !config.stickyMode })}
               disabled={!isEditing}
             />
           )}

@@ -3,14 +3,14 @@
  *
  * Version history management: create snapshots, list versions, restore.
  */
-import { desc, eq, count } from 'drizzle-orm'
+import { count, desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@server/db/connection'
 import {
   dashboards,
+  dashboardVersions,
   pages,
   widgets,
-  dashboardVersions,
 } from '@server/db/schema'
 import { protectedGetFn, protectedPostFn } from '@server/api/auth'
 import {
@@ -18,8 +18,8 @@ import {
   handleServerError,
   NotFoundError,
 } from '@server/api/utils'
-import type { ApiResponse, PaginatedResponse } from '@shared/types'
 import { createPaginatedResponse } from '@shared/types'
+import type { ApiResponse, PaginatedResponse } from '@shared/types'
 import type { DashboardSnapshot } from '@server/db/schema'
 
 export interface VersionSummary {
@@ -97,7 +97,7 @@ async function createSnapshot(dashboardId: string): Promise<DashboardSnapshot> {
           y: w.y,
           w: w.w,
           h: w.h,
-          config: (w.config as Record<string, unknown>) ?? {},
+          config: w.config ?? {},
         })),
       }
     }),
@@ -242,7 +242,7 @@ async function getVersionHandler({
 
 export const getVersionFn = protectedGetFn
   .inputValidator(getVersionInputSchema)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   .handler(getVersionHandler as any)
 
 const restoreVersionInputSchema = z.object({
@@ -299,7 +299,7 @@ export const restoreVersionFn = protectedPostFn
               y: w.y,
               w: w.w,
               h: w.h,
-              config: w.config,
+              config: w.config as Record<string, {}>,
             })),
           )
         }

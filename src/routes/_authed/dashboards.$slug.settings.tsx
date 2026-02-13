@@ -11,10 +11,10 @@ import {
   getDashboardFn,
   updateDashboardFn,
 } from '@server/api/dashboards'
-import type { DashboardDetail } from '@server/api/dashboards'
 import { saveDashboardAsTemplateFn } from '@server/api/templates'
-import type { ApiResponse } from '@shared/types'
 import { toast } from 'sonner'
+import type { DashboardDetail } from '@server/api/dashboards'
+import type { ApiResponse } from '@shared/types'
 
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'

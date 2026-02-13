@@ -57,7 +57,7 @@ export async function exportDashboardToYaml(
     .limit(1)
 
   const dashboard = dashboardRows[0] as
-    | (typeof dashboards.$inferSelect)
+    | typeof dashboards.$inferSelect
     | undefined
 
   if (!dashboard) {

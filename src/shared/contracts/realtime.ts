@@ -100,11 +100,7 @@ export type RealtimeServerMessage =
     }
   | {
       type: 'broadcast'
-      event:
-        | 'widget:update'
-        | 'layout:change'
-        | 'page:switch'
-        | 'cursor:move'
+      event: 'widget:update' | 'layout:change' | 'page:switch' | 'cursor:move'
       dashboardId: string
       actorId: string
       payload: Record<string, unknown>

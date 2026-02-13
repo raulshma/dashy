@@ -100,7 +100,6 @@ export function WidgetSandboxProvider<TConfig extends WidgetConfigSchema>({
     setState((prev) => ({ ...prev, isLoading: true, error: null }))
     try {
       await lifecycle?.onRefresh?.()
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (mountedRef.current) {
         setState((prev) => ({
           ...prev,
@@ -109,7 +108,6 @@ export function WidgetSandboxProvider<TConfig extends WidgetConfigSchema>({
         }))
       }
     } catch (error) {
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (mountedRef.current) {
         setState((prev) => ({
           ...prev,

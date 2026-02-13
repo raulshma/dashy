@@ -4,18 +4,18 @@
  * Server-side functions for exporting dashboards, user data, and database backups.
  */
 import { z } from 'zod'
-import {
-  backupService,
-  type DashboardExport,
-  type UserDashboardsExport,
-  type FullBackupMetadata,
-} from '@server/services/backup'
+import { backupService } from '@server/services/backup'
 import { protectedGetFn, protectedPostFn } from '@server/api/auth'
 import {
+  ForbiddenError,
   handleServerError,
   NotFoundError,
-  ForbiddenError,
 } from '@server/api/utils'
+import type {
+  DashboardExport,
+  FullBackupMetadata,
+  UserDashboardsExport,
+} from '@server/services/backup'
 import type { ApiResponse } from '@shared/types'
 
 const exportDashboardSchema = z.object({
@@ -27,7 +27,7 @@ const exportUserDashboardsSchema = z.object({
 })
 
 const importDashboardSchema = z.object({
-  exportData: z.record(z.unknown()),
+  exportData: z.record(z.string(), z.unknown()),
   options: z
     .object({
       overwrite: z.boolean().optional(),
@@ -125,9 +125,7 @@ export const importDashboardFn = protectedPostFn
   )
 
 export const listBackupsFn = protectedGetFn.handler(
-  async (): Promise<
-    ApiResponse<Array<FullBackupMetadata & { file: string }>>
-  > => {
+  (): ApiResponse<Array<FullBackupMetadata & { file: string }>> => {
     try {
       const backups = backupService.listBackups()
       return { success: true, data: backups }

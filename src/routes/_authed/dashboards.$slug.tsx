@@ -21,6 +21,15 @@ import {
   updateWidgetConfigFn,
   updateWidgetPositionsFn,
 } from '@server/api/widgets'
+import {
+  Add01Icon,
+  ArrowLeft01Icon,
+  DashboardSquare01Icon,
+  InformationCircleIcon,
+  Loading03Icon,
+  MoreVerticalIcon,
+  Settings01Icon,
+} from '@hugeicons/core-free-icons'
 import type { DashboardDetail } from '@server/api/dashboards'
 import type { RealtimeServerMessage } from '@shared/contracts'
 import type { ApiResponse } from '@shared/types'
@@ -52,15 +61,6 @@ import { GlassCard } from '@/components/ui/glass-card'
 import { Icon } from '@/components/ui/icon'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Add01Icon,
-  ArrowLeft01Icon,
-  DashboardSquare01Icon,
-  InformationCircleIcon,
-  Loading03Icon,
-  MoreVerticalIcon,
-  Settings01Icon,
-} from '@hugeicons/core-free-icons'
 import { useActionHistory } from '@/hooks/use-action-history'
 import { useEditMode } from '@/hooks/use-edit-mode'
 import { useOptimisticMutations } from '@/hooks/use-optimistic-mutations'

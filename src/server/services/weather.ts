@@ -57,8 +57,7 @@ type GeocodeSearchResult =
   | { success: false; error: string }
 
 const WEATHER_API_BASE_URL = 'https://api.open-meteo.com/v1/forecast'
-const GEOCODING_API_BASE_URL =
-  'https://geocoding-api.open-meteo.com/v1/search'
+const GEOCODING_API_BASE_URL = 'https://geocoding-api.open-meteo.com/v1/search'
 
 const DEFAULT_WEATHER_TTL_MS = 10 * 60 * 1000
 const DEFAULT_GEOCODE_TTL_MS = 60 * 60 * 1000
@@ -229,7 +228,10 @@ function parseWeatherData(
     typeof current.weather_code === 'number' ? current.weather_code : 0
 
   const currentWeather: CurrentWeather = {
-    time: typeof current.time === 'string' ? current.time : new Date().toISOString(),
+    time:
+      typeof current.time === 'string'
+        ? current.time
+        : new Date().toISOString(),
     temperature:
       typeof current.temperature_2m === 'number' ? current.temperature_2m : 0,
     feelsLike:
@@ -241,7 +243,9 @@ function parseWeatherData(
         ? current.relative_humidity_2m
         : 0,
     pressure:
-      typeof current.surface_pressure === 'number' ? current.surface_pressure : 0,
+      typeof current.surface_pressure === 'number'
+        ? current.surface_pressure
+        : 0,
     windSpeed:
       typeof current.wind_speed_10m === 'number' ? current.wind_speed_10m : 0,
     windDirection:
@@ -252,9 +256,7 @@ function parseWeatherData(
     condition: getConditionFromWeatherCode(weatherCode),
   }
 
-  const times = Array.isArray(daily.time)
-    ? (daily.time as Array<unknown>)
-    : []
+  const times = Array.isArray(daily.time) ? (daily.time as Array<unknown>) : []
   const maxTemps = Array.isArray(daily.temperature_2m_max)
     ? (daily.temperature_2m_max as Array<unknown>)
     : []
@@ -264,7 +266,9 @@ function parseWeatherData(
   const weatherCodes = Array.isArray(daily.weather_code)
     ? (daily.weather_code as Array<unknown>)
     : []
-  const precipProbabilityMax = Array.isArray(daily.precipitation_probability_max)
+  const precipProbabilityMax = Array.isArray(
+    daily.precipitation_probability_max,
+  )
     ? (daily.precipitation_probability_max as Array<unknown>)
     : []
   const precipSum = Array.isArray(daily.precipitation_sum)
@@ -280,15 +284,25 @@ function parseWeatherData(
 
   const forecast: Array<ForecastItem> = []
   for (let i = 0; i < length; i++) {
-    const code = typeof weatherCodes[i] === 'number' ? weatherCodes[i] : 0
+    const timeValue = times[i]
+    const maxTempValue = maxTemps[i]
+    const minTempValue = minTemps[i]
+    const precipProbabilityValue = precipProbabilityMax[i]
+    const precipSumValue = precipSum[i]
+    const weatherCodeValue = weatherCodes[i]
+
+    const code = typeof weatherCodeValue === 'number' ? weatherCodeValue : 0
 
     forecast.push({
-      date: typeof times[i] === 'string' ? times[i] : '',
-      tempMax: typeof maxTemps[i] === 'number' ? maxTemps[i] : 0,
-      tempMin: typeof minTemps[i] === 'number' ? minTemps[i] : 0,
+      date: typeof timeValue === 'string' ? timeValue : '',
+      tempMax: typeof maxTempValue === 'number' ? maxTempValue : 0,
+      tempMin: typeof minTempValue === 'number' ? minTempValue : 0,
       precipitationProbabilityMax:
-        typeof precipProbabilityMax[i] === 'number' ? precipProbabilityMax[i] : 0,
-      precipitationSum: typeof precipSum[i] === 'number' ? precipSum[i] : 0,
+        typeof precipProbabilityValue === 'number'
+          ? precipProbabilityValue
+          : 0,
+      precipitationSum:
+        typeof precipSumValue === 'number' ? precipSumValue : 0,
       condition: getConditionFromWeatherCode(code),
     })
   }
@@ -314,7 +328,10 @@ export async function geocodeLocation(
 ): Promise<GeocodeSearchResult> {
   const normalizedQuery = query.trim()
   if (normalizedQuery.length < 2) {
-    return { success: false, error: 'Location query must be at least 2 characters' }
+    return {
+      success: false,
+      error: 'Location query must be at least 2 characters',
+    }
   }
 
   const count = Math.min(Math.max(options?.count ?? 5, 1), 10)
@@ -494,7 +511,10 @@ export function clearGeocodeCache(): void {
   geocodeCache.clear()
 }
 
-export function getWeatherCacheStats(): { weatherEntries: number; geocodeEntries: number } {
+export function getWeatherCacheStats(): {
+  weatherEntries: number
+  geocodeEntries: number
+} {
   return {
     weatherEntries: weatherCache.size,
     geocodeEntries: geocodeCache.size,

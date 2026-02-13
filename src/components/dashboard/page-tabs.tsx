@@ -5,20 +5,19 @@
  * Uses @dnd-kit for drag and drop.
  */
 import {
-  DndContext,
   closestCenter,
+  DndContext,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
-  type DragEndEvent,
 } from '@dnd-kit/core'
 import {
   arrayMove,
+  horizontalListSortingStrategy,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
-  horizontalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
@@ -27,6 +26,7 @@ import {
   Edit02Icon,
   MoreVerticalIcon,
 } from '@hugeicons/core-free-icons'
+import type { DragEndEvent } from '@dnd-kit/core'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,

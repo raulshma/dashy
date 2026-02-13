@@ -7,8 +7,8 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { eq } from 'drizzle-orm'
-import { db, closeDatabase } from '@server/db/connection'
-import { users, dashboards, pages, widgets } from '@server/db/schema'
+import { closeDatabase, db } from '@server/db/connection'
+import { dashboards, pages, users, widgets } from '@server/db/schema'
 import { config } from '@server/config'
 
 export interface DashboardExport {
@@ -29,7 +29,7 @@ export interface DashboardExport {
     name: string
     icon: string | null
     sortOrder: number
-    layout: Record<string, unknown> | null
+    layout: Record<string, {}> | null
     widgets: Array<{
       id: string
       type: string
@@ -38,7 +38,7 @@ export interface DashboardExport {
       y: number
       w: number
       h: number
-      config: Record<string, unknown>
+      config: Record<string, {}>
     }>
   }>
 }
@@ -51,7 +51,7 @@ export interface UserDashboardsExport {
     email: string
     displayName: string
   }
-  dashboards: DashboardExport[]
+  dashboards: Array<DashboardExport>
 }
 
 export interface FullBackupMetadata {
@@ -91,7 +91,7 @@ export class BackupService {
           name: page.name,
           icon: page.icon,
           sortOrder: page.sortOrder,
-          layout: page.layout as Record<string, unknown> | null,
+          layout: page.layout as Record<string, {}> | null,
           widgets: pageWidgets.map((w) => ({
             id: w.id,
             type: w.type,
@@ -100,7 +100,7 @@ export class BackupService {
             y: w.y,
             w: w.w,
             h: w.h,
-            config: w.config as Record<string, unknown>,
+            config: w.config,
           })),
         }
       }),

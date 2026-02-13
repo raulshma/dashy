@@ -7,15 +7,17 @@ import { z } from 'zod'
 import { protectedPostFn } from '@server/api/auth'
 import { handleServerError } from '@server/api/utils'
 import {
-  performCheck,
   getHistory,
   getHistoryStats,
+  isPolling,
+  performCheck,
   startPolling,
   stopPolling,
-  isPolling,
-  type CheckConfig,
-  type HealthCheckResult,
-  type HealthHistoryEntry,
+} from '@server/services/health'
+import type {
+  CheckConfig,
+  HealthCheckResult,
+  HealthHistoryEntry,
 } from '@server/services/health'
 import type { ApiResponse } from '@shared/types'
 
@@ -137,7 +139,7 @@ export const runHealthCheckFn = protectedPostFn
 
 export const getHealthHistoryFn = protectedPostFn
   .inputValidator(historySchema)
-  .handler(async ({ data }): Promise<ApiResponse<HistoryResponse>> => {
+  .handler(({ data }): ApiResponse<HistoryResponse> => {
     try {
       const history = getHistory(data.widgetId).slice(0, data.limit)
       const stats = getHistoryStats(data.widgetId)
@@ -153,7 +155,7 @@ export const getHealthHistoryFn = protectedPostFn
 
 export const startHealthPollingFn = protectedPostFn
   .inputValidator(pollingSchema)
-  .handler(async ({ data }): Promise<ApiResponse<PollingStatusResponse>> => {
+  .handler(({ data }): ApiResponse<PollingStatusResponse> => {
     try {
       let checkConfig: CheckConfig
 
@@ -194,7 +196,7 @@ export const startHealthPollingFn = protectedPostFn
 
 export const stopHealthPollingFn = protectedPostFn
   .inputValidator(stopPollingSchema)
-  .handler(async ({ data }): Promise<ApiResponse<PollingStatusResponse>> => {
+  .handler(({ data }): ApiResponse<PollingStatusResponse> => {
     try {
       stopPolling(data.widgetId)
 
@@ -212,7 +214,7 @@ export const stopHealthPollingFn = protectedPostFn
 
 export const getPollingStatusFn = protectedPostFn
   .inputValidator(stopPollingSchema)
-  .handler(async ({ data }): Promise<ApiResponse<PollingStatusResponse>> => {
+  .handler(({ data }): ApiResponse<PollingStatusResponse> => {
     try {
       return {
         success: true,

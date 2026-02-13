@@ -7,7 +7,7 @@
 import { eq } from 'drizzle-orm'
 import { db } from '@server/db/connection'
 import { plugins } from '@server/db/schema'
-import type { PluginPermission, PluginId } from '@shared/contracts'
+import type { PluginId, PluginPermission } from '@shared/contracts'
 
 export type PermissionDecision = 'granted' | 'denied' | 'prompt'
 
@@ -45,10 +45,10 @@ class PermissionManager {
 
     const grantedPermissions = JSON.parse(
       pluginRecord.grantedPermissions || '[]',
-    ) as PluginPermission[]
+    ) as Array<PluginPermission>
     const deniedPermissions = JSON.parse(
       pluginRecord.deniedPermissions || '[]',
-    ) as PluginPermission[]
+    ) as Array<PluginPermission>
 
     if (grantedPermissions.includes(permission)) {
       return 'granted'
@@ -80,10 +80,10 @@ class PermissionManager {
     if (persist) {
       const grantedPermissions = JSON.parse(
         pluginRecord.grantedPermissions || '[]',
-      ) as PluginPermission[]
+      ) as Array<PluginPermission>
       const deniedPermissions = JSON.parse(
         pluginRecord.deniedPermissions || '[]',
-      ) as PluginPermission[]
+      ) as Array<PluginPermission>
 
       if (!grantedPermissions.includes(permission)) {
         grantedPermissions.push(permission)
@@ -120,10 +120,10 @@ class PermissionManager {
     if (persist) {
       const grantedPermissions = JSON.parse(
         pluginRecord.grantedPermissions || '[]',
-      ) as PluginPermission[]
+      ) as Array<PluginPermission>
       const deniedPermissions = JSON.parse(
         pluginRecord.deniedPermissions || '[]',
-      ) as PluginPermission[]
+      ) as Array<PluginPermission>
 
       if (!deniedPermissions.includes(permission)) {
         deniedPermissions.push(permission)
@@ -146,7 +146,9 @@ class PermissionManager {
     }
   }
 
-  async getGrantedPermissions(pluginId: PluginId): Promise<PluginPermission[]> {
+  async getGrantedPermissions(
+    pluginId: PluginId,
+  ): Promise<Array<PluginPermission>> {
     const pluginRecord = await db.query.plugins.findFirst({
       where: eq(plugins.id, pluginId),
     })
@@ -155,10 +157,12 @@ class PermissionManager {
 
     return JSON.parse(
       pluginRecord.grantedPermissions || '[]',
-    ) as PluginPermission[]
+    ) as Array<PluginPermission>
   }
 
-  async getDeniedPermissions(pluginId: PluginId): Promise<PluginPermission[]> {
+  async getDeniedPermissions(
+    pluginId: PluginId,
+  ): Promise<Array<PluginPermission>> {
     const pluginRecord = await db.query.plugins.findFirst({
       where: eq(plugins.id, pluginId),
     })
@@ -167,7 +171,7 @@ class PermissionManager {
 
     return JSON.parse(
       pluginRecord.deniedPermissions || '[]',
-    ) as PluginPermission[]
+    ) as Array<PluginPermission>
   }
 
   async revokeAllPermissions(pluginId: PluginId): Promise<void> {
@@ -219,9 +223,9 @@ class PermissionManager {
   }
 
   validatePermissions(
-    requested: PluginPermission[],
-    declared: PluginPermission[],
-  ): { valid: boolean; extra: PluginPermission[] } {
+    requested: Array<PluginPermission>,
+    declared: Array<PluginPermission>,
+  ): { valid: boolean; extra: Array<PluginPermission> } {
     const extra = requested.filter((p) => !declared.includes(p))
     return {
       valid: extra.length === 0,
